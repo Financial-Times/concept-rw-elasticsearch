@@ -1,10 +1,18 @@
 {
-  "actions" : [
-    {
-      "add" : {
-        "index" : "concepts-0.0.4",
-        "alias" : "concepts"
+   "actions": [
+      {
+         "add": {
+            "index": "concepts-0.0.6",
+            "alias": "concepts",
+            "filter": {
+               "terms": {
+                  "authorities": [
+                     "TME",
+                     "SmartLogic"
+                  ]
+               }
+            }
+         }
       }
-    }
-  ]
+   ]
 }
