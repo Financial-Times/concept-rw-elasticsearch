@@ -148,8 +148,8 @@
                }
             },
             "isFTAuthor": {
-               "type": "keyword",
-               "index": "not_analyzed"
+               "type": "text",
+               "index": true
             },
             "aliases": {
                "type": "string",
