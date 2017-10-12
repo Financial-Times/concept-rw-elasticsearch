@@ -5,12 +5,22 @@
         "folding" : {
           "tokenizer" : "standard",
           "filter" : ["lowercase", "standard", "ascii_folding"]
+        },
+        "edge_ngram": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "ascii_folding", "edge_ngram_filter"]
         }
       },
       "filter" : {
         "ascii_folding" : {
           "type" : "asciifolding",
           "preserve_original" : true
+        },
+        "edge_ngram_filter": {
+          "type": "edge_ngram",
+          "min_gram": 1,
+          "max_gram": 20
         }
       }
     }
@@ -45,6 +55,11 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
+            },
+            "edge_ngram": {
+               "type": "string",
+               "analyzer": "edge_ngram",
+               "search_analyzer": "standard"
             },
             "mentionsCompletion": {
               "analyzer": "folding",
@@ -94,6 +109,11 @@
               "type": "string",
               "index": "not_analyzed"
             },
+            "edge_ngram": {
+               "type": "string",
+               "analyzer": "edge_ngram",
+               "search_analyzer": "standard"
+            },
             "mentionsCompletion": {
               "analyzer": "folding",
               "type": "completion"
@@ -125,14 +145,8 @@
           }
         },
         "isFTAuthor": {
-          "type": "string",
-          "analyzer": "standard",
-          "fields": {
-            "raw": {
-              "type": "string",
-              "index": "not_analyzed"
-            }
-          }
+          "type": "text",
+          "index": true
         },
         "aliases": {
           "type": "string",
@@ -175,6 +189,11 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
+            },
+            "edge_ngram": {
+               "type": "string",
+               "analyzer": "edge_ngram",
+               "search_analyzer": "standard"
             },
             "mentionsCompletion": {
               "analyzer": "folding",
@@ -223,7 +242,12 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
-            }
+           },
+           "edge_ngram": {
+             "type": "string",
+             "analyzer": "edge_ngram",
+             "search_analyzer": "standard"
+           }
           }
         },
         "aliases": {
@@ -267,6 +291,11 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
+            },
+            "edge_ngram": {
+              "type": "string",
+              "analyzer": "edge_ngram",
+              "search_analyzer": "standard"
             }
           }
         },
@@ -311,6 +340,11 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
+            },
+            "edge_ngram": {
+               "type": "string",
+               "analyzer": "edge_ngram",
+               "search_analyzer": "standard"
             },
             "completionByContext": {
               "analyzer": "folding",
@@ -364,7 +398,12 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
-            }
+           },
+           "edge_ngram": {
+             "type": "string",
+             "analyzer": "edge_ngram",
+             "search_analyzer": "standard"
+           }
           }
         },
         "aliases": {
@@ -408,6 +447,11 @@
             "raw": {
               "type": "string",
               "index": "not_analyzed"
+            },
+            "edge_ngram": {
+               "type": "string",
+               "analyzer": "edge_ngram",
+               "search_analyzer": "standard"
             },
             "mentionsCompletion": {
               "analyzer": "folding",
