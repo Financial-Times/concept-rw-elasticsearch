@@ -365,6 +365,9 @@ func TestWritePreservesPatchableDataForPerson(t *testing.T) {
 	var actual EsPersonConceptModel
 	assert.NoError(t, json.Unmarshal(*p.Source, &actual))
 
+	assert.Equal(t, actual.EsConceptModel.Metrics.AnnotationsCount, 1234)
+	assert.Equal(t, actual.EsConceptModel.Metrics.PrevWeekAnnotationsCount, 123)
+
 	previous.PrefLabel = payload.PrefLabel
 	assert.Equal(t, previous, actual)
 }
@@ -400,6 +403,9 @@ func TestWritePreservesMetrics(t *testing.T) {
 	actualCount := int(actualMetrics["annotationsCount"].(float64))
 	assert.NoError(t, err, "expected concept to contain annotations count")
 	assert.Equal(t, 150000, actualCount)
+
+	prevWeekAnnotationsCount := int(actualMetrics["prevWeekAnnotationsCount"].(float64))
+	assert.Equal(t, 15, prevWeekAnnotationsCount)
 }
 
 func newBrokenESMock() *httptest.Server {
@@ -818,6 +824,7 @@ func TestMetricsUpdated(t *testing.T) {
 	assert.Equal(t, payload.PrefLabel, actualModel.PrefLabel, "Expect the original fields to still be intact")
 
 	assert.Equal(t, testMetrics.Metrics.AnnotationsCount, actualModel.Metrics.AnnotationsCount, "Count should be set")
+	assert.Equal(t, testMetrics.Metrics.PrevWeekAnnotationsCount, actualModel.Metrics.PrevWeekAnnotationsCount, "PrevWeekAnnotationsCount should be set")
 }
 
 func waitForClientInjection(service EsService) error {
