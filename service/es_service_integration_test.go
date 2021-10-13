@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package service
@@ -16,11 +17,12 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger"
-	uuid "github.com/satori/go.uuid"
 	testLog "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/olivere/elastic.v5"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -55,7 +57,7 @@ func TestWrite(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, up, resp, err := writeTestDocument(service, organisationsType, testUUID)
 	defer deleteTestDocument(t, service, organisationsType, testUUID)
 
@@ -76,7 +78,7 @@ func TestWriteMakesPersonAnFTColumnist(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	op, _, _, err := writeTestPersonDocument(service, peopleType, testUUID, "false")
 	defer deleteTestDocument(t, service, peopleType, testUUID)
 
@@ -86,7 +88,7 @@ func TestWriteMakesPersonAnFTColumnist(t *testing.T) {
 	require.NoError(t, err, "expected successful flush")
 
 	ftColumnist := &EsMembershipModel{
-		Id:             uuid.NewV4().String(),
+		Id:             uuid.New().String(),
 		PersonId:       testUUID,
 		OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 		Memberships:    []string{"7ef75a6a-b6bf-4eb7-a1da-03e0acabef1a", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1b", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -117,7 +119,7 @@ func TestWriteMakesPersonAnFTJournalist(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, _, _, err = writeTestPersonDocument(service, peopleType, testUUID, "false")
 	defer deleteTestDocument(t, service, peopleType, testUUID)
 	require.NoError(t, err, "expected successful write")
@@ -126,7 +128,7 @@ func TestWriteMakesPersonAnFTJournalist(t *testing.T) {
 	require.NoError(t, err, "expected successful flush")
 
 	ftColumnist := &EsMembershipModel{
-		Id:             uuid.NewV4().String(),
+		Id:             uuid.New().String(),
 		PersonId:       testUUID,
 		OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 		Memberships:    []string{"7ef75a6a-b6bf-4eb7-a1da-03e0acabef1a", "33ee38a4-c677-4952-a141-2ae14da3aedd", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -160,11 +162,11 @@ func TestWriteDummyPersonWhenMembershipArrives(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, getTimeFunc}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	ctx := context.Background()
 
 	membership := &EsMembershipModel{
-		Id:             uuid.NewV4().String(),
+		Id:             uuid.New().String(),
 		PersonId:       testUUID,
 		OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 		Memberships:    []string{"7ef75a6a-b6bf-4eb7-a1da-03e0acabef1a", "33ee38a4-c677-4952-a141-2ae14da3aedd", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -195,11 +197,11 @@ func TestWritePersonAfterMembership(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	ctx := context.Background()
 
 	membership := &EsMembershipModel{
-		Id:             uuid.NewV4().String(),
+		Id:             uuid.New().String(),
 		PersonId:       testUUID,
 		OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 		Memberships:    []string{"7ef75a6a-b6bf-4eb7-a1da-03e0acabef1a", "33ee38a4-c677-4952-a141-2ae14da3aedd", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -233,9 +235,9 @@ func TestWritePersonAfterMembership(t *testing.T) {
 func TestFTAuthorWriteOrder(t *testing.T) {
 	service := getTestESService(t)
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	membership := &EsMembershipModel{
-		Id:             uuid.NewV4().String(),
+		Id:             uuid.New().String(),
 		PersonId:       testUUID,
 		OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 		Memberships:    []string{"7ef75a6a-b6bf-4eb7-a1da-03e0acabef1a", "33ee38a4-c677-4952-a141-2ae14da3aedd", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -278,7 +280,7 @@ func TestWriteMakesDoesNotMakePersonAnFTAuthor(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, _, _, err = writeTestPersonDocument(service, peopleType, testUUID, "false")
 	defer deleteTestDocument(t, service, peopleType, testUUID)
 
@@ -294,7 +296,7 @@ func TestWriteMakesDoesNotMakePersonAnFTAuthor(t *testing.T) {
 		{
 			name: "Not FT org",
 			model: &EsMembershipModel{
-				Id:             uuid.NewV4().String(),
+				Id:             uuid.New().String(),
 				PersonId:       testUUID,
 				OrganisationId: "7aafe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 				Memberships:    []string{"7ef75a6a-b6bf-4eb7-a1da-03e0acabef1a", "33ee38a4-c677-4952-a141-2ae14da3aedd", "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -303,7 +305,7 @@ func TestWriteMakesDoesNotMakePersonAnFTAuthor(t *testing.T) {
 		{
 			name: "FT but not a columnist or journalist",
 			model: &EsMembershipModel{
-				Id:             uuid.NewV4().String(),
+				Id:             uuid.New().String(),
 				PersonId:       testUUID,
 				OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 				Memberships:    []string{"7af75a6a-b6bf-4eb7-a1da-03e0acabef1a", "33aa38a4-c677-4952-a141-2ae14da3aedd", "7af75a6a-b6bf-4eb7-a1da-03e0acabef1c"},
@@ -312,7 +314,7 @@ func TestWriteMakesDoesNotMakePersonAnFTAuthor(t *testing.T) {
 		{
 			name: "FT but has no memberships",
 			model: &EsMembershipModel{
-				Id:             uuid.NewV4().String(),
+				Id:             uuid.New().String(),
 				PersonId:       testUUID,
 				OrganisationId: "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0",
 			},
@@ -347,7 +349,7 @@ func TestWritePreservesPatchableDataForPerson(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	payload, _, _, err := writeTestPersonDocument(service, peopleType, testUUID, "true")
 	defer deleteTestDocument(t, service, peopleType, testUUID)
 
@@ -396,7 +398,7 @@ func TestWritePreservesMetrics(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, _, _, err = writeTestDocument(service, organisationsType, testUUID)
 	defer deleteTestDocument(t, service, organisationsType, testUUID)
 
@@ -465,7 +467,7 @@ func TestRead(t *testing.T) {
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 	defer ec.Stop()
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	payload, _, _, err := writeTestDocument(service, organisationsType, testUUID)
 	defer deleteTestDocument(t, service, organisationsType, testUUID)
 
@@ -500,7 +502,7 @@ func TestPassClientThroughChannel(t *testing.T) {
 	err := waitForClientInjection(service)
 	require.NoError(t, err, "ES client injection failed or timed out")
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	payload, _, _, err := writeTestDocument(service, organisationsType, testUUID)
 	defer deleteTestDocument(t, service.(*esService), organisationsType, testUUID)
 
@@ -529,7 +531,7 @@ func TestDelete(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, _, resp, err := writeTestDocument(service, organisationsType, testUUID)
 	require.NoError(t, err, "expected successful write")
 
@@ -559,7 +561,7 @@ func TestDeleteNotFoundConcept(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, nil, indexName, nil, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	resp, _ := service.DeleteData(newTestContext(), organisationsType+"s", testUUID)
 
 	assert.False(t, resp.Found, "document is not found")
@@ -577,19 +579,19 @@ func TestCleanup(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID1 := uuid.NewV4().String()
+	testUUID1 := uuid.New().String()
 	_, _, resp, err := writeTestDocument(service, organisationsType, testUUID1)
 	defer deleteTestDocument(t, service, organisationsType, testUUID1)
 
 	require.NoError(t, err, "expected successful write")
 	require.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 
-	testUUID2 := uuid.NewV4().String()
+	testUUID2 := uuid.New().String()
 	_, _, resp, err = writeTestDocument(service, peopleType, testUUID2)
 	require.NoError(t, err, "expected successful write")
 	require.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 
-	testUUID3 := uuid.NewV4().String()
+	testUUID3 := uuid.New().String()
 	_, _, resp, err = writeTestDocument(service, organisationsType, testUUID3)
 	require.NoError(t, err, "expected successful write")
 	require.Equal(t, esStatusCreated, resp.Result, "document should have been created")
@@ -635,7 +637,7 @@ func TestDeprecationFlagTrue(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	payload := EsConceptModel{
 		Id:           testUUID,
 		ApiUrl:       fmt.Sprintf("%s/%s/%s", apiBaseURL, organisationsType, testUUID),
@@ -679,7 +681,7 @@ func TestDeprecationFlagFalse(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	payload := EsConceptModel{
 		Id:           testUUID,
 		ApiUrl:       fmt.Sprintf("%s/%s/%s", apiBaseURL, organisationsType, testUUID),
@@ -723,7 +725,7 @@ func TestMetricsUpdated(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	payload := EsConceptModel{
 		Id:           testUUID,
 		ApiUrl:       fmt.Sprintf("%s/%ss/%s", apiBaseURL, organisationsType, testUUID),
@@ -792,7 +794,7 @@ func TestGetAllIds(t *testing.T) {
 	}
 
 	for i := 0; i < max; i++ {
-		testUUID := uuid.NewV4().String()
+		testUUID := uuid.New().String()
 		expected[i] = testUUID
 		ids <- testUUID
 	}
