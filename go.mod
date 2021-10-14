@@ -10,6 +10,7 @@ require (
 	github.com/Financial-Times/service-status-go v0.0.0-20160323111542-3f5199736a3d
 	github.com/Financial-Times/transactionid-utils-go v0.2.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2
 	github.com/hashicorp/go-version v0.0.0-20180716215031-270f2f71b1ee // indirect
@@ -20,7 +21,6 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.0.6
 	github.com/smartystreets/go-aws-auth v0.0.0-20180515143844-0c1422d1fdb9
 	github.com/smartystreets/gunit v1.1.3 // indirect

@@ -11,12 +11,13 @@ import (
 
 	"github.com/Financial-Times/go-logger"
 	tid "github.com/Financial-Times/transactionid-utils-go"
-	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	testLog "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/olivere/elastic.v5"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -51,7 +52,7 @@ func TestWriteWithGenericError(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, up, _, err := writeTestDocument(service, organisationsType, testUUID)
 	assert.EqualError(t, err, "unexpected end of JSON input")
 	require.NotNil(t, hook.LastEntry())
@@ -76,7 +77,7 @@ func TestWriteWithESError(t *testing.T) {
 	require.NoError(t, err, "require a bulk processor")
 
 	service := &esService{sync.RWMutex{}, ec, bulkProcessor, indexName, &bulkProcessorConfig, time.Now}
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, up, _, err := writeTestDocument(service, organisationsType, testUUID)
 
 	assert.EqualError(t, err, "elastic: Error 500 (Internal Server Error)")
@@ -103,7 +104,7 @@ func TestDeleteWithESError(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, nil, indexName, nil, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 	_, err = service.DeleteData(newTestContext(), organisationsType+"s", testUUID)
 
 	assert.EqualError(t, err, "elastic: Error 500 (Internal Server Error)")
@@ -128,7 +129,7 @@ func TestDeleteWithGenericError(t *testing.T) {
 	assert.NoError(t, err, "expected no error for ES client")
 	service := &esService{sync.RWMutex{}, ec, nil, indexName, nil, time.Now}
 
-	testUUID := uuid.NewV4().String()
+	testUUID := uuid.New().String()
 
 	_, err = service.DeleteData(newTestContext(), organisationsType+"s", testUUID)
 
@@ -155,8 +156,8 @@ func TestCleanupErrorLogging(t *testing.T) {
 
 	service := &esService{sync.RWMutex{}, ec, nil, indexName, nil, time.Now}
 
-	testUUID1 := uuid.NewV4().String()
-	testUUID2 := uuid.NewV4().String()
+	testUUID1 := uuid.New().String()
+	testUUID2 := uuid.New().String()
 
 	concept := AggregateConceptModel{PrefUUID: testUUID2, SourceRepresentations: []SourceConcept{
 		{
