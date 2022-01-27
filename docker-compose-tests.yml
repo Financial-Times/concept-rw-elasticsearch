@@ -8,13 +8,12 @@ services:
     environment:
         ELASTICSEARCH_TEST_URL: "http://elastic-search:9200"
     command: bash -c "
-              curl -sL https://raw.githubusercontent.com/Financial-Times/concept-search-index-mapping/master/mapping.json -o mapping.json &&
-              curl -s --request PUT 'http://elastic-search:9200/concept' --data '@mapping.json' &&
-              go test -mod=readonly -race -tags=integration ./..."
+              curl -s --request PUT 'http://elastic-search:9200/concept' --data '@configs/referenceSchema.json' &&
+              go test -mod=readonly -v -race -tags=integration ./..."
     depends_on:
       - elastic-search
   elastic-search:
-    image: elasticsearch:5.3
+    image: elasticsearch:7.10.1
     environment:
         http.host: "0.0.0.0"
         transport.host: "127.0.0.1"

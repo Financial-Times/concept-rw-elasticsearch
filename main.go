@@ -14,9 +14,9 @@ import (
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/gorilla/mux"
 	cli "github.com/jawher/mow.cli"
+	"github.com/olivere/elastic/v7"
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 func main() {

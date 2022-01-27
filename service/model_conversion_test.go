@@ -47,6 +47,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 			},
 			esConceptModel: EsConceptModel{
 				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:      "organisations",
 				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel: "Apple, Inc.",
 				Types: []string{
@@ -83,6 +84,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 			},
 			esConceptModel: EsConceptModel{
 				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:      "organisations",
 				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel: "Apple, Inc.",
 				Types: []string{
@@ -108,6 +110,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 			},
 			esConceptModel: EsConceptModel{
 				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d9",
+				Type:      "organisations",
 				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d9",
 				PrefLabel: "Apple, Inc.",
 				Types: []string{
@@ -131,6 +134,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 		actual := ConvertConceptToESConceptModel(testModel.conceptModel, "organisations", testTID)
 		esModel := actual.(*EsConceptModel)
 		assert.Equal(t, testModel.esConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esConceptModel.Id, esModel.Id))
+		assert.Equal(t, testModel.esConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esConceptModel.Type, esModel.Type))
 		assert.Equal(t, testModel.esConceptModel.ApiUrl, esModel.ApiUrl, fmt.Sprintf("Expected ApiUrl %s differs from actual ApiUrl %s ", testModel.esConceptModel.ApiUrl, esModel.ApiUrl))
 		assert.Equal(t, testModel.esConceptModel.DirectType, esModel.DirectType, fmt.Sprintf("Expected DirectType %s differs from actual DirectType %s ", testModel.esConceptModel.DirectType, esModel.DirectType))
 		assert.Equal(t, testModel.esConceptModel.PrefLabel, esModel.PrefLabel, fmt.Sprintf("Expected PrefLabel %s differs from actual PrefLabel %s ", testModel.esConceptModel.PrefLabel, esModel.PrefLabel))
@@ -189,6 +193,7 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 			},
 			esConceptModel: EsConceptModel{
 				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:      "organisations",
 				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel: "Apple, Inc.",
 				Types: []string{
@@ -228,6 +233,7 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 			},
 			esConceptModel: EsConceptModel{
 				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:      "organisations",
 				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel: "Apple, Inc.",
 				Types: []string{
@@ -254,6 +260,7 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 			},
 			esConceptModel: EsConceptModel{
 				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d9",
+				Type:      "organisations",
 				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d9",
 				PrefLabel: "Apple, Inc.",
 				Types: []string{
@@ -278,6 +285,7 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 			actual := ConvertAggregateConceptToESConceptModel(testModel.conceptModel, "organisations", testTID)
 			esModel := actual.(*EsConceptModel)
 			assert.Equal(t, testModel.esConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esConceptModel.Id, esModel.Id))
+			assert.Equal(t, testModel.esConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esConceptModel.Type, esModel.Type))
 			assert.Equal(t, testModel.esConceptModel.ApiUrl, esModel.ApiUrl, fmt.Sprintf("Expected ApiUrl %s differs from actual ApiUrl %s ", testModel.esConceptModel.ApiUrl, esModel.ApiUrl))
 			assert.Equal(t, testModel.esConceptModel.DirectType, esModel.DirectType, fmt.Sprintf("Expected DirectType %s differs from actual DirectType %s ", testModel.esConceptModel.DirectType, esModel.DirectType))
 			assert.Equal(t, testModel.esConceptModel.PrefLabel, esModel.PrefLabel, fmt.Sprintf("Expected PrefLabel %s differs from actual PrefLabel %s ", testModel.esConceptModel.PrefLabel, esModel.PrefLabel))
@@ -369,6 +377,7 @@ func TestConvertPersonToESConceptModel(t *testing.T) {
 			esPersonConceptModel: EsPersonConceptModel{
 				EsConceptModel: &EsConceptModel{
 					Id:        "http://api.ft.com/things/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
+					Type:      "people",
 					ApiUrl:    "http://api.ft.com/people/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
 					PrefLabel: "Martin Wolf",
 					Types: []string{
@@ -389,6 +398,7 @@ func TestConvertPersonToESConceptModel(t *testing.T) {
 		actual := ConvertConceptToESConceptModel(testModel.conceptModel, "people", testTID)
 		esModel := actual.(*EsPersonConceptModel)
 		assert.Equal(t, testModel.esPersonConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esPersonConceptModel.Id, esModel.Id))
+		assert.Equal(t, testModel.esPersonConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esPersonConceptModel.Type, esModel.Type))
 		assert.Equal(t, testModel.esPersonConceptModel.ApiUrl, esModel.ApiUrl, fmt.Sprintf("Expected ApiUrl %s differs from actual ApiUrl %s ", testModel.esPersonConceptModel.ApiUrl, esModel.ApiUrl))
 		assert.Equal(t, testModel.esPersonConceptModel.DirectType, esModel.DirectType, fmt.Sprintf("Expected DirectType %s differs from actual DirectType %s ", testModel.esPersonConceptModel.DirectType, esModel.DirectType))
 		assert.Equal(t, testModel.esPersonConceptModel.PrefLabel, esModel.PrefLabel, fmt.Sprintf("Expected PrefLabel %s differs from actual PrefLabel %s ", testModel.esPersonConceptModel.PrefLabel, esModel.PrefLabel))
@@ -468,6 +478,7 @@ func TestConvertPersonToAggregateConceptModel(t *testing.T) {
 			esPersonConceptModel: EsPersonConceptModel{
 				EsConceptModel: &EsConceptModel{
 					Id:        "http://api.ft.com/things/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
+					Type:      "people",
 					ApiUrl:    "http://api.ft.com/people/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
 					PrefLabel: "Martin Wolf",
 					Types: []string{
@@ -492,6 +503,7 @@ func TestConvertPersonToAggregateConceptModel(t *testing.T) {
 			esPersonConceptModel: EsPersonConceptModel{
 				EsConceptModel: &EsConceptModel{
 					Id:        "http://api.ft.com/things/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
+					Type:      "people",
 					ApiUrl:    "http://api.ft.com/people/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
 					PrefLabel: "Martin Wolf",
 					Types: []string{
@@ -515,6 +527,7 @@ func TestConvertPersonToAggregateConceptModel(t *testing.T) {
 			esPersonConceptModel: EsPersonConceptModel{
 				EsConceptModel: &EsConceptModel{
 					Id:        "http://api.ft.com/things/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
+					Type:      "people",
 					ApiUrl:    "http://api.ft.com/people/0f07d468-fc37-3c44-bf19-a81f2aae9f36",
 					PrefLabel: "Martin Wolf",
 					Types: []string{
@@ -537,6 +550,7 @@ func TestConvertPersonToAggregateConceptModel(t *testing.T) {
 			actual := ConvertAggregateConceptToESConceptModel(testModel.aggregateConceptModel, "people", testTID)
 			esModel := actual.(*EsPersonConceptModel)
 			assert.Equal(t, testModel.esPersonConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esPersonConceptModel.Id, esModel.Id))
+			assert.Equal(t, testModel.esPersonConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esPersonConceptModel.Type, esModel.Type))
 			assert.Equal(t, testModel.esPersonConceptModel.ApiUrl, esModel.ApiUrl, fmt.Sprintf("Expected ApiUrl %s differs from actual ApiUrl %s ", testModel.esPersonConceptModel.ApiUrl, esModel.ApiUrl))
 			assert.Equal(t, testModel.esPersonConceptModel.DirectType, esModel.DirectType, fmt.Sprintf("Expected DirectType %s differs from actual DirectType %s ", testModel.esPersonConceptModel.DirectType, esModel.DirectType))
 			assert.Equal(t, testModel.esPersonConceptModel.PrefLabel, esModel.PrefLabel, fmt.Sprintf("Expected PrefLabel %s differs from actual PrefLabel %s ", testModel.esPersonConceptModel.PrefLabel, esModel.PrefLabel))
@@ -595,6 +609,7 @@ func TestValidateEsConceptModelMarshalling(t *testing.T) {
 			testName: "Check true deprecation flag",
 			inConcept: &EsConceptModel{
 				Id:           "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:         "organisations",
 				ApiUrl:       "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel:    "Apple, Inc.",
 				DirectType:   "http://www.ft.com/ontology/company/PublicCompany",
@@ -603,12 +618,13 @@ func TestValidateEsConceptModelMarshalling(t *testing.T) {
 				Authorities:  []string{},
 				IsDeprecated: true,
 			},
-			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":"","isDeprecated":true}`,
+			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","type":"organisations","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":"","isDeprecated":true}`,
 		},
 		{
 			testName: "Check false deprecation flag",
 			inConcept: &EsConceptModel{
 				Id:           "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:         "organisations",
 				ApiUrl:       "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel:    "Apple, Inc.",
 				DirectType:   "http://www.ft.com/ontology/company/PublicCompany",
@@ -617,12 +633,13 @@ func TestValidateEsConceptModelMarshalling(t *testing.T) {
 				Authorities:  []string{},
 				IsDeprecated: false,
 			},
-			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":""}`,
+			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","type":"organisations","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":""}`,
 		},
 		{
 			testName: "Check scopeNote with value",
 			inConcept: &EsConceptModel{
 				Id:          "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:        "organisations",
 				ApiUrl:      "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel:   "Apple, Inc.",
 				DirectType:  "http://www.ft.com/ontology/company/PublicCompany",
@@ -631,12 +648,13 @@ func TestValidateEsConceptModelMarshalling(t *testing.T) {
 				Authorities: []string{},
 				ScopeNote:   "scope note dummy value",
 			},
-			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":"","scopeNote":"scope note dummy value"}`,
+			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","type":"organisations","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":"","scopeNote":"scope note dummy value"}`,
 		},
 		{
 			testName: "Check scopeNote with no value",
 			inConcept: &EsConceptModel{
 				Id:          "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:        "organisations",
 				ApiUrl:      "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
 				PrefLabel:   "Apple, Inc.",
 				DirectType:  "http://www.ft.com/ontology/company/PublicCompany",
@@ -645,7 +663,7 @@ func TestValidateEsConceptModelMarshalling(t *testing.T) {
 				Authorities: []string{},
 				ScopeNote:   "",
 			},
-			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":""}`,
+			expectedResultJSON: `{"id":"http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","type":"organisations","apiUrl":"http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","prefLabel":"Apple, Inc.","types":[],"authorities":[],"directType":"http://www.ft.com/ontology/company/PublicCompany","lastModified":"","publishReference":""}`,
 		},
 	}
 

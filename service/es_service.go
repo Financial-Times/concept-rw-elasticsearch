@@ -15,7 +15,7 @@ import (
 
 	log "github.com/Financial-Times/go-logger"
 	tid "github.com/Financial-Times/transactionid-utils-go"
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic/v7"
 )
 
 var (
@@ -36,6 +36,7 @@ const (
 	ftOrgUUID          = "7bcfe07b-0fb1-49ce-a5fa-e51d5c01c3e0"
 	columnistUUID      = "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1b"
 	journalistUUID     = "33ee38a4-c677-4952-a141-2ae14da3aedd"
+	notFoundResult     = "not_found"
 )
 
 type esService struct {
@@ -49,11 +50,11 @@ type esService struct {
 
 type EsService interface {
 	LoadData(ctx context.Context, conceptType string, uuid string, payload EsModel) (bool, *elastic.IndexResponse, error)
-	ReadData(conceptType string, uuid string) (*elastic.GetResult, error)
+	ReadData(uuid string) (*elastic.GetResult, error)
 	DeleteData(ctx context.Context, conceptType string, uuid string) (*elastic.DeleteResponse, error)
-	LoadBulkData(conceptType string, uuid string, payload interface{})
+	LoadBulkData(uuid string, payload interface{})
 	CleanupData(ctx context.Context, concept Concept)
-	PatchUpdateConcept(ctx context.Context, conceptType string, uuid string, payload PayloadPatch)
+	PatchUpdateConcept(uuid string, payload PayloadPatch)
 	CloseBulkProcessor() error
 	GetClusterHealth() (*elastic.ClusterHealthResponse, error)
 	IsIndexReadOnly() (bool, string, error)
@@ -169,18 +170,15 @@ func (es *esService) LoadData(ctx context.Context, conceptType string, uuid stri
 		return updated, resp, err
 	}
 
-	var readResult *elastic.GetResult
 	// Check if membership is FT
 	if conceptType == memberships {
 		emm := payload.(*EsMembershipModel)
 		if emm.OrganisationId != ftOrgUUID || len(emm.Memberships) < 1 || !isFtAuthor(emm.Memberships) { // drop as not FT Author
 			return updated, resp, err
 		}
-		readResult, err = es.ReadData(person, emm.PersonId)
 		uuid = emm.PersonId // membership is for person
-	} else {
-		readResult, err = es.ReadData(conceptType, uuid)
 	}
+	readResult, err := es.ReadData(uuid)
 
 	patchData := getPatchData(err, loadDataLog, conceptType, readResult)
 
@@ -189,16 +187,17 @@ func (es *esService) LoadData(ctx context.Context, conceptType string, uuid stri
 		p := EsPersonConceptModel{
 			EsConceptModel: &EsConceptModel{
 				Id:           uuid,
+				Type:         person,
 				LastModified: es.getCurrentTime().Format(time.RFC3339),
 			},
 			IsFTAuthor: "true",
 		}
 		logDebugPersonData(loadDataLog, &p, "Writing a dummy person")
-		return es.writeToEs(ctx, loadDataLog, person, uuid, p)
+		return es.writeToEs(ctx, loadDataLog, uuid, p)
 	}
 
 	if conceptType != memberships {
-		updated, resp, err = es.writeToEs(ctx, loadDataLog, conceptType, uuid, payload)
+		updated, resp, err = es.writeToEs(ctx, loadDataLog, uuid, payload)
 	}
 
 	//check if patchData is empty
@@ -206,21 +205,19 @@ func (es *esService) LoadData(ctx context.Context, conceptType string, uuid stri
 		if conceptType == memberships {
 			// `patchData` is for a person
 			logDebugPatchData(loadDataLog, patchData, "patch for person ")
-			es.PatchUpdateConcept(ctx, person, uuid, patchData)
 		} else {
 			logDebugPatchData(loadDataLog, patchData, "patch for concept ")
-			es.PatchUpdateConcept(ctx, conceptType, uuid, patchData)
 		}
+		es.PatchUpdateConcept(uuid, patchData)
 		updated = true
 	}
 	return updated, resp, err
 }
 
-func (es *esService) writeToEs(ctx context.Context, loadDataLog *logrus.Entry, conceptType string, uuid string, payload EsModel) (updated bool, resp *elastic.IndexResponse, err error) {
+func (es *esService) writeToEs(ctx context.Context, loadDataLog *logrus.Entry, uuid string, payload EsModel) (updated bool, resp *elastic.IndexResponse, err error) {
 	loadDataLog.Debugf("Writing: %s", uuid)
 	resp, err = es.elasticClient.Index().
 		Index(es.indexName).
-		Type(conceptType).
 		Id(uuid).
 		BodyJson(payload).
 		Do(ctx)
@@ -249,7 +246,7 @@ func getPatchData(err error, loadDataLog *logrus.Entry, conceptType string, read
 		case person, memberships:
 			esConcept := new(EsPersonConceptModel)
 			if readResult.Found {
-				if err := json.Unmarshal(*readResult.Source, esConcept); err != nil {
+				if err := json.Unmarshal(readResult.Source, esConcept); err != nil {
 					loadDataLog.WithError(err).Error("Failed to read patchData from Elasticsearch")
 					return patchData
 				} else {
@@ -262,7 +259,7 @@ func getPatchData(err error, loadDataLog *logrus.Entry, conceptType string, read
 		default:
 			esConcept := new(EsConceptModel)
 			if readResult.Found {
-				if err := json.Unmarshal(*readResult.Source, esConcept); err != nil {
+				if err := json.Unmarshal(readResult.Source, esConcept); err != nil {
 					loadDataLog.WithError(err).Error("Failed to read patchData from Elasticsearch")
 					return patchData
 				}
@@ -281,7 +278,7 @@ func (es *esService) checkElasticClient() error {
 	return nil
 }
 
-func (es *esService) ReadData(conceptType string, uuid string) (*elastic.GetResult, error) {
+func (es *esService) ReadData(uuid string) (*elastic.GetResult, error) {
 	es.RLock()
 	defer es.RUnlock()
 
@@ -291,7 +288,6 @@ func (es *esService) ReadData(conceptType string, uuid string) (*elastic.GetResu
 
 	resp, err := es.elasticClient.Get().
 		Index(es.indexName).
-		Type(conceptType).
 		Id(uuid).
 		Do(context.Background())
 
@@ -342,7 +338,12 @@ func (es *esService) findConceptTypes(ctx context.Context, uuids []string) (map[
 
 	conceptTypeMap := make(map[string]string)
 	for _, hit := range result.Hits.Hits {
-		conceptTypeMap[hit.Id] = hit.Type
+		esModel := EsConceptModel{}
+		err = json.Unmarshal(hit.Source, &esModel)
+		if err != nil {
+			return nil, err
+		}
+		conceptTypeMap[hit.Id] = esModel.Type
 	}
 
 	return conceptTypeMap, nil
@@ -368,12 +369,11 @@ func (es *esService) DeleteData(ctx context.Context, conceptType string, uuid st
 
 	resp, err := es.elasticClient.Delete().
 		Index(es.indexName).
-		Type(conceptType).
 		Id(uuid).
 		Do(ctx)
 
 	if elastic.IsNotFound(err) {
-		return &elastic.DeleteResponse{Found: false}, nil
+		return &elastic.DeleteResponse{Result: notFoundResult}, nil
 	}
 
 	if err != nil {
@@ -392,8 +392,8 @@ func (es *esService) DeleteData(ctx context.Context, conceptType string, uuid st
 	return resp, err
 }
 
-func (es *esService) LoadBulkData(conceptType string, uuid string, payload interface{}) {
-	r := elastic.NewBulkIndexRequest().Index(es.indexName).Type(conceptType).Id(uuid).Doc(payload)
+func (es *esService) LoadBulkData(uuid string, payload interface{}) {
+	r := elastic.NewBulkIndexRequest().Index(es.indexName).Id(uuid).Doc(payload)
 
 	es.RLock()
 	defer es.RUnlock()
@@ -402,8 +402,8 @@ func (es *esService) LoadBulkData(conceptType string, uuid string, payload inter
 }
 
 // PatchUpdateConcept updates a concept document with metrics. See https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html#_updates_with_a_partial_document
-func (es *esService) PatchUpdateConcept(ctx context.Context, conceptType string, uuid string, payload PayloadPatch) {
-	r := elastic.NewBulkUpdateRequest().Index(es.indexName).Id(uuid).Type(conceptType).Doc(payload)
+func (es *esService) PatchUpdateConcept(uuid string, payload PayloadPatch) {
+	r := elastic.NewBulkUpdateRequest().Index(es.indexName).Id(uuid).Doc(payload)
 
 	es.RLock()
 	defer es.RUnlock()
@@ -426,7 +426,7 @@ func (es *esService) GetAllIds(ctx context.Context) chan EsIDTypePair {
 			Query(elastic.NewMatchAllQuery()).
 			Sort("_doc", true).
 			Size(1000).
-			FetchSource(false)
+			FetchSource(true)
 
 		es.RLock()
 		defer es.RUnlock()
@@ -454,7 +454,12 @@ func (es *esService) processScrollPage(ctx context.Context, r *elastic.ScrollSer
 
 	scrollId := res.ScrollId
 	for _, c := range res.Hits.Hits {
-		ch <- EsIDTypePair{ID: c.Id, Type: c.Type}
+		esModel := EsConceptModel{}
+		err = json.Unmarshal(c.Source, &esModel)
+		if err != nil {
+			return nil, err
+		}
+		ch <- EsIDTypePair{ID: c.Id, Type: esModel.Type}
 	}
 
 	return elastic.NewScrollService(es.elasticClient).ScrollId(scrollId), nil

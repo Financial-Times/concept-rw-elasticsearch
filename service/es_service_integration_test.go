@@ -17,10 +17,10 @@ import (
 	"time"
 
 	"github.com/Financial-Times/go-logger"
+	"github.com/olivere/elastic/v7"
 	testLog "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/google/uuid"
 )
@@ -30,6 +30,7 @@ const (
 	membershipType = "memberships"
 
 	esStatusCreated = "created"
+	esStatusDeleted = "deleted"
 )
 
 func TestMain(m *testing.M) {
@@ -65,7 +66,6 @@ func TestWrite(t *testing.T) {
 
 	assert.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 	assert.Equal(t, indexName, resp.Index, "index name")
-	assert.Equal(t, organisationsType, resp.Type, "concept type")
 	assert.Equal(t, testUUID, resp.Id, "document id")
 	assert.True(t, up, "updated was true")
 }
@@ -101,14 +101,15 @@ func TestWriteMakesPersonAnFTColumnist(t *testing.T) {
 	require.NoError(t, err, "require successful write")
 	assert.True(t, up, "author was updated")
 
-	p, err := service.ReadData(peopleType, testUUID)
+	p, err := service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful read")
 	var actual EsPersonConceptModel
-	assert.NoError(t, json.Unmarshal(*p.Source, &actual))
+	assert.NoError(t, json.Unmarshal(p.Source, &actual))
 	assert.Equal(t, "true", actual.IsFTAuthor)
 	assert.Equal(t, op.Id, actual.Id)
 	assert.Equal(t, op.ApiUrl, actual.ApiUrl)
 	assert.Equal(t, op.PrefLabel, actual.PrefLabel)
+	assert.Equal(t, peopleType, actual.Type)
 }
 
 func TestWriteMakesPersonAnFTJournalist(t *testing.T) {
@@ -141,11 +142,12 @@ func TestWriteMakesPersonAnFTJournalist(t *testing.T) {
 	require.NoError(t, err, "require successful write")
 	assert.True(t, up, "Journalist updated")
 
-	p, err := service.ReadData(peopleType, testUUID)
+	p, err := service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful read")
 	var actual EsPersonConceptModel
-	assert.NoError(t, json.Unmarshal(*p.Source, &actual))
+	assert.NoError(t, json.Unmarshal(p.Source, &actual))
 	assert.Equal(t, "true", actual.IsFTAuthor)
+	assert.Equal(t, peopleType, actual.Type)
 }
 
 func TestWriteDummyPersonWhenMembershipArrives(t *testing.T) {
@@ -180,13 +182,14 @@ func TestWriteDummyPersonWhenMembershipArrives(t *testing.T) {
 	err = service.bulkProcessor.Flush() // wait for the bulk processor to write the data
 	require.NoError(t, err, "require successful write")
 	assert.True(t, up, "Journalist updated")
-	p, err := service.ReadData(peopleType, testUUID)
+	p, err := service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful read")
 	var actual EsPersonConceptModel
-	assert.NoError(t, json.Unmarshal(*p.Source, &actual))
+	assert.NoError(t, json.Unmarshal(p.Source, &actual))
 	assert.Equal(t, testUUID, actual.Id)
 	assert.Equal(t, "true", actual.IsFTAuthor)
 	assert.Equal(t, testLastModified, actual.LastModified)
+	assert.Equal(t, peopleType, actual.Type)
 }
 
 func TestWritePersonAfterMembership(t *testing.T) {
@@ -222,14 +225,15 @@ func TestWritePersonAfterMembership(t *testing.T) {
 	require.NoError(t, err, "require successful write")
 	assert.True(t, up, "Journalist updated")
 
-	p, err := service.ReadData(peopleType, testUUID)
+	p, err := service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful read")
 	var actual EsPersonConceptModel
-	assert.NoError(t, json.Unmarshal(*p.Source, &actual))
+	assert.NoError(t, json.Unmarshal(p.Source, &actual))
 	assert.Equal(t, op.Id, actual.Id)
 	assert.Equal(t, op.ApiUrl, actual.ApiUrl)
 	assert.Equal(t, op.PrefLabel, actual.PrefLabel)
 	assert.Equal(t, "true", actual.IsFTAuthor)
+	assert.Equal(t, peopleType, actual.Type)
 }
 
 func TestFTAuthorWriteOrder(t *testing.T) {
@@ -250,8 +254,8 @@ func TestFTAuthorWriteOrder(t *testing.T) {
 	flushChangesToIndex(t, service)
 
 	var p1 EsPersonConceptModel
-	esResult, _ := service.ReadData(peopleType, testUUID)
-	require.NoError(t, json.Unmarshal(*esResult.Source, &p1))
+	esResult, _ := service.ReadData(testUUID)
+	require.NoError(t, json.Unmarshal(esResult.Source, &p1))
 
 	deleteTestDocument(t, service, peopleType, testUUID)
 
@@ -262,8 +266,8 @@ func TestFTAuthorWriteOrder(t *testing.T) {
 	flushChangesToIndex(t, service)
 
 	var p2 EsPersonConceptModel
-	esResult, _ = service.ReadData(peopleType, testUUID)
-	require.NoError(t, json.Unmarshal(*esResult.Source, &p2))
+	esResult, _ = service.ReadData(testUUID)
+	require.NoError(t, json.Unmarshal(esResult.Source, &p2))
 
 	deleteTestDocument(t, service, peopleType, testUUID)
 
@@ -331,10 +335,10 @@ func TestWriteMakesDoesNotMakePersonAnFTAuthor(t *testing.T) {
 			require.NoError(t, err, "require successful write")
 			assert.False(t, up, "should not have updated person")
 
-			p, err := service.ReadData(peopleType, testUUID)
+			p, err := service.ReadData(testUUID)
 			assert.NoError(t, err, "expected successful read")
 			var actual EsPersonConceptModel
-			assert.NoError(t, json.Unmarshal(*p.Source, &actual))
+			assert.NoError(t, json.Unmarshal(p.Source, &actual))
 			assert.Equal(t, "false", actual.IsFTAuthor)
 		})
 	}
@@ -357,14 +361,14 @@ func TestWritePreservesPatchableDataForPerson(t *testing.T) {
 	ctx := context.Background()
 	_, err = ec.Refresh(indexName).Do(ctx)
 	require.NoError(t, err, "expected successful flush")
-	service.PatchUpdateConcept(ctx, peopleType, testUUID, &EsConceptModelPatch{Metrics: &ConceptMetrics{AnnotationsCount: 1234, PrevWeekAnnotationsCount: 123}})
+	service.PatchUpdateConcept(testUUID, &EsConceptModelPatch{Metrics: &ConceptMetrics{AnnotationsCount: 1234, PrevWeekAnnotationsCount: 123}})
 	err = service.bulkProcessor.Flush() // wait for the bulk processor to write the data
 	require.NoError(t, err, "require successful metrics write")
 
-	p, err := service.ReadData(peopleType, testUUID)
+	p, err := service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful read")
 	var previous EsPersonConceptModel
-	assert.NoError(t, json.Unmarshal(*p.Source, &previous))
+	assert.NoError(t, json.Unmarshal(p.Source, &previous))
 	assert.Equal(t, "true", previous.IsFTAuthor)
 
 	payload.PrefLabel = "Updated PrefLabel"
@@ -377,10 +381,10 @@ func TestWritePreservesPatchableDataForPerson(t *testing.T) {
 	require.NoError(t, err, "expected successful flush")
 	assert.True(t, up, "person should have been updated")
 
-	p, err = service.ReadData(peopleType, testUUID)
+	p, err = service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful read")
 	var actual EsPersonConceptModel
-	assert.NoError(t, json.Unmarshal(*p.Source, &actual))
+	assert.NoError(t, json.Unmarshal(p.Source, &actual))
 
 	assert.Equal(t, actual.EsConceptModel.Metrics.AnnotationsCount, 1234)
 	assert.Equal(t, actual.EsConceptModel.Metrics.PrevWeekAnnotationsCount, 123)
@@ -405,7 +409,7 @@ func TestWritePreservesMetrics(t *testing.T) {
 	require.NoError(t, err, "require successful concept write")
 
 	testMetrics := &EsConceptModelPatch{Metrics: &ConceptMetrics{AnnotationsCount: 150000, PrevWeekAnnotationsCount: 15}}
-	service.PatchUpdateConcept(newTestContext(), organisationsType, testUUID, testMetrics)
+	service.PatchUpdateConcept(testUUID, testMetrics)
 	err = service.bulkProcessor.Flush() // wait for the bulk processor to write the data
 	require.NoError(t, err, "require successful metrics write")
 
@@ -413,10 +417,10 @@ func TestWritePreservesMetrics(t *testing.T) {
 	err = service.bulkProcessor.Flush() // wait for the bulk processor to write the data
 	require.NoError(t, err, "require successful concept update")
 
-	actual, err := service.ReadData(organisationsType, testUUID)
+	actual, err := service.ReadData(testUUID)
 	assert.NoError(t, err, "expected successful concept read")
 	m := make(map[string]interface{})
-	assert.NoError(t, json.Unmarshal(*actual.Source, &m))
+	assert.NoError(t, json.Unmarshal(actual.Source, &m))
 
 	actualMetrics := m["metrics"].(map[string]interface{})
 	actualCount := int(actualMetrics["annotationsCount"].(float64))
@@ -475,13 +479,13 @@ func TestRead(t *testing.T) {
 	_, err = ec.Refresh(indexName).Do(context.Background())
 	require.NoError(t, err, "expected successful flush")
 
-	resp, err := service.ReadData(organisationsType, testUUID)
+	resp, err := service.ReadData(testUUID)
 
 	assert.NoError(t, err, "expected no error for ES read")
 	assert.True(t, resp.Found, "should find a result")
 
 	obj := make(map[string]interface{})
-	assert.NoError(t, json.Unmarshal(*resp.Source, &obj))
+	assert.NoError(t, json.Unmarshal(resp.Source, &obj))
 	assert.Equal(t, payload.ApiUrl, obj["apiUrl"], "apiUrl")
 	assert.Equal(t, payload.PrefLabel, obj["prefLabel"], "prefLabel")
 }
@@ -508,13 +512,13 @@ func TestPassClientThroughChannel(t *testing.T) {
 
 	assert.NoError(t, err, "expected successful write")
 
-	resp, err := service.ReadData(organisationsType, testUUID)
+	resp, err := service.ReadData(testUUID)
 
 	assert.NoError(t, err, "expected no error for ES read")
 	assert.True(t, resp.Found, "should find a result")
 
 	obj := make(map[string]interface{})
-	assert.NoError(t, json.Unmarshal(*resp.Source, &obj))
+	assert.NoError(t, json.Unmarshal(resp.Source, &obj))
 
 	assert.Equal(t, fmt.Sprintf("%s/%s/%s", apiBaseURL, organisationsType, testUUID), obj["apiUrl"], "apiUrl")
 	assert.Equal(t, payload.ApiUrl, obj["apiUrl"], "apiUrl")
@@ -537,14 +541,14 @@ func TestDelete(t *testing.T) {
 
 	assert.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 	assert.Equal(t, indexName, resp.Index, "index name")
-	assert.Equal(t, organisationsType, resp.Type, "concept type")
+	//	assert.Equal(t, organisationsType, resp.Type, "concept type")
 	assert.Equal(t, testUUID, resp.Id, "document id")
 
 	deleteResp, err := service.DeleteData(newTestContext(), organisationsType, testUUID)
 	require.NoError(t, err)
-	assert.True(t, deleteResp.Found)
+	assert.Equal(t, esStatusDeleted, deleteResp.Result, "document is deleted")
 
-	getResp, err := service.ReadData(organisationsType, testUUID)
+	getResp, err := service.ReadData(testUUID)
 	assert.NoError(t, err)
 	assert.False(t, getResp.Found)
 }
@@ -564,7 +568,7 @@ func TestDeleteNotFoundConcept(t *testing.T) {
 	testUUID := uuid.New().String()
 	resp, _ := service.DeleteData(newTestContext(), organisationsType+"s", testUUID)
 
-	assert.False(t, resp.Found, "document is not found")
+	assert.False(t, resp.ForcedRefresh, "document is not found")
 
 	assert.Empty(t, hook.AllEntries(), "It logged nothing")
 }
@@ -614,15 +618,15 @@ func TestCleanup(t *testing.T) {
 
 	service.CleanupData(newTestContext(), concept)
 
-	getResp, err := service.ReadData(peopleType, testUUID2)
+	getResp, err := service.ReadData(testUUID2)
 	assert.NoError(t, err)
 	assert.False(t, getResp.Found)
 
-	getResp, err = service.ReadData(organisationsType, testUUID3)
+	getResp, err = service.ReadData(testUUID3)
 	assert.NoError(t, err)
 	assert.False(t, getResp.Found)
 
-	getResp, err = service.ReadData(organisationsType, testUUID1)
+	getResp, err = service.ReadData(testUUID1)
 	assert.NoError(t, err)
 	assert.True(t, getResp.Found)
 }
@@ -640,6 +644,7 @@ func TestDeprecationFlagTrue(t *testing.T) {
 	testUUID := uuid.New().String()
 	payload := EsConceptModel{
 		Id:           testUUID,
+		Type:         organisationsType,
 		ApiUrl:       fmt.Sprintf("%s/%s/%s", apiBaseURL, organisationsType, testUUID),
 		PrefLabel:    fmt.Sprintf("Test concept %s %s", organisationsType, testUUID),
 		Types:        []string{},
@@ -656,19 +661,19 @@ func TestDeprecationFlagTrue(t *testing.T) {
 
 	assert.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 	assert.Equal(t, indexName, resp.Index, "index name")
-	assert.Equal(t, organisationsType, resp.Type, "concept type")
 	assert.Equal(t, testUUID, resp.Id, "document id")
 
-	readResp, err := service.ReadData(organisationsType, testUUID)
+	readResp, err := service.ReadData(testUUID)
 
 	assert.NoError(t, err, "expected no error for ES read")
 	assert.True(t, readResp.Found, "should find a result")
 
 	obj := make(map[string]interface{})
-	assert.NoError(t, json.Unmarshal(*readResp.Source, &obj))
+	assert.NoError(t, json.Unmarshal(readResp.Source, &obj))
 	assert.Equal(t, payload.ApiUrl, obj["apiUrl"], "apiUrl")
 	assert.Equal(t, payload.PrefLabel, obj["prefLabel"], "prefLabel")
 	assert.Equal(t, true, obj["isDeprecated"], "deprecation flag")
+	assert.Equal(t, organisationsType, obj["type"], "concept type")
 }
 
 func TestDeprecationFlagFalse(t *testing.T) {
@@ -684,6 +689,7 @@ func TestDeprecationFlagFalse(t *testing.T) {
 	testUUID := uuid.New().String()
 	payload := EsConceptModel{
 		Id:           testUUID,
+		Type:         organisationsType,
 		ApiUrl:       fmt.Sprintf("%s/%s/%s", apiBaseURL, organisationsType, testUUID),
 		PrefLabel:    fmt.Sprintf("Test concept %s %s", organisationsType, testUUID),
 		Types:        []string{},
@@ -699,18 +705,18 @@ func TestDeprecationFlagFalse(t *testing.T) {
 
 	assert.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 	assert.Equal(t, indexName, resp.Index, "index name")
-	assert.Equal(t, organisationsType, resp.Type, "concept type")
 	assert.Equal(t, testUUID, resp.Id, "document id")
 
-	readResp, err := service.ReadData(organisationsType, testUUID)
+	readResp, err := service.ReadData(testUUID)
 
 	assert.NoError(t, err, "expected no error for ES read")
 	assert.True(t, readResp.Found, "should find a result")
 
 	obj := make(map[string]interface{})
-	assert.NoError(t, json.Unmarshal(*readResp.Source, &obj))
+	assert.NoError(t, json.Unmarshal(readResp.Source, &obj))
 	assert.Equal(t, payload.ApiUrl, obj["apiUrl"], "apiUrl")
 	assert.Equal(t, payload.PrefLabel, obj["prefLabel"], "prefLabel")
+	assert.Equal(t, payload.Type, obj["type"], "concept type")
 	_, deprecatedFlagExists := obj["isDeprecated"]
 	assert.False(t, deprecatedFlagExists, "deprecation flag")
 }
@@ -728,6 +734,7 @@ func TestMetricsUpdated(t *testing.T) {
 	testUUID := uuid.New().String()
 	payload := EsConceptModel{
 		Id:           testUUID,
+		Type:         organisationsType,
 		ApiUrl:       fmt.Sprintf("%s/%ss/%s", apiBaseURL, organisationsType, testUUID),
 		PrefLabel:    fmt.Sprintf("Test concept %s %s", organisationsType, testUUID),
 		Types:        []string{},
@@ -743,24 +750,24 @@ func TestMetricsUpdated(t *testing.T) {
 
 	assert.Equal(t, esStatusCreated, resp.Result, "document should have been created")
 	assert.Equal(t, indexName, resp.Index, "index name")
-	assert.Equal(t, organisationsType, resp.Type, "concept type")
 	assert.Equal(t, testUUID, resp.Id, "document id")
 
 	testMetrics := &EsConceptModelPatch{Metrics: &ConceptMetrics{AnnotationsCount: 15000, PrevWeekAnnotationsCount: 150}}
-	service.PatchUpdateConcept(newTestContext(), organisationsType, testUUID, testMetrics)
+	service.PatchUpdateConcept(testUUID, testMetrics)
 
 	service.bulkProcessor.Flush() // wait for the bulk processor to write the data
 
-	readResp, err := service.ReadData(organisationsType, testUUID)
+	readResp, err := service.ReadData(testUUID)
 
 	assert.NoError(t, err, "expected no error for ES read")
 	assert.True(t, readResp.Found, "should find a result")
 
 	actualModel := EsConceptModel{}
-	err = json.Unmarshal(*readResp.Source, &actualModel)
+	err = json.Unmarshal(readResp.Source, &actualModel)
 
 	assert.NoError(t, err)
 
+	assert.Equal(t, payload.Type, actualModel.Type, "Expect the concept type to still be intact")
 	assert.Equal(t, payload.ApiUrl, actualModel.ApiUrl, "Expect the original fields to still be intact")
 	assert.Equal(t, payload.PrefLabel, actualModel.PrefLabel, "Expect the original fields to still be intact")
 
@@ -860,6 +867,7 @@ func writeTestPersonDocument(es EsService, conceptType string, uuid string, isFT
 	payload := EsPersonConceptModel{
 		EsConceptModel: &EsConceptModel{
 			Id:           uuid,
+			Type:         conceptType,
 			ApiUrl:       fmt.Sprintf("%s/%s/%s", apiBaseURL, conceptType, uuid),
 			PrefLabel:    fmt.Sprintf("Test concept %s %s", conceptType, uuid),
 			Types:        []string{},
@@ -890,7 +898,7 @@ func waitForClientInjection(service EsService) error {
 func deleteTestDocument(t *testing.T, es *esService, conceptType string, uuid string) {
 	deleteResp, err := es.DeleteData(newTestContext(), conceptType, uuid)
 	require.NoError(t, err)
-	assert.True(t, deleteResp.Found)
+	assert.Equal(t, esStatusDeleted, deleteResp.Result, "document is deleted")
 
 	flushChangesToIndex(t, es)
 }

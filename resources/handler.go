@@ -22,6 +22,10 @@ var (
 	errProcessingBody         = errors.New("Request body is not in the expected concept model format")
 )
 
+const (
+	notFoundResult = "not_found"
+)
+
 // Handler handles http calls
 type Handler struct {
 	elasticService      service.EsService
@@ -83,7 +87,7 @@ func (h *Handler) LoadBulkData(w http.ResponseWriter, r *http.Request) {
 	transactionID := tid.GetTransactionIDFromRequest(r)
 	ctx := tid.TransactionAwareContext(r.Context(), transactionID)
 
-	conceptType, concept, payload, err := h.processPayload(r.WithContext(ctx))
+	_, concept, payload, err := h.processPayload(r.WithContext(ctx))
 	if err == errUnsupportedConceptType {
 		writeMessage(w, err.Error(), http.StatusNotFound)
 		return
@@ -94,16 +98,13 @@ func (h *Handler) LoadBulkData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.elasticService.LoadBulkData(conceptType, concept.PreferredUUID(), payload)
+	h.elasticService.LoadBulkData(concept.PreferredUUID(), payload)
 	h.elasticService.CleanupData(ctx, concept)
 	writeMessage(w, "Concept written successfully", http.StatusOK)
 }
 
 // LoadMetrics updates a concept with new metric data
 func (h *Handler) LoadMetrics(w http.ResponseWriter, r *http.Request) {
-	transactionID := tid.GetTransactionIDFromRequest(r)
-	ctx := tid.TransactionAwareContext(context.Background(), transactionID)
-
 	vars := mux.Vars(r)
 	uuid := vars["id"]
 	conceptType := vars["concept-type"]
@@ -128,7 +129,7 @@ func (h *Handler) LoadMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.elasticService.PatchUpdateConcept(ctx, conceptType, uuid, &metrics)
+	h.elasticService.PatchUpdateConcept(uuid, &metrics)
 	writeMessage(w, "Concept updated with metrics successfully", http.StatusOK)
 }
 
@@ -217,9 +218,7 @@ func processAggregateConceptModel(ctx context.Context, uuid string, conceptType 
 
 func (h *Handler) ReadData(writer http.ResponseWriter, request *http.Request) {
 	uuid := mux.Vars(request)["id"]
-	conceptType := mux.Vars(request)["concept-type"]
-
-	getResult, err := h.elasticService.ReadData(conceptType, uuid)
+	getResult, err := h.elasticService.ReadData(uuid)
 
 	if err != nil {
 		log.Error(err.Error())
@@ -238,9 +237,18 @@ func (h *Handler) ReadData(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	// remove es type field from the result source, because it is not available in the current read api
+	esModel := service.EsPersonConceptModel{}
+	err = json.Unmarshal(getResult.Source, &esModel)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	esModel.Type = ""
+
 	writer.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(writer)
-	enc.Encode(getResult.Source)
+	enc.Encode(esModel)
 }
 
 // DeleteData handles a delete for a concept
@@ -259,7 +267,7 @@ func (h *Handler) DeleteData(writer http.ResponseWriter, request *http.Request) 
 		return
 	}
 
-	if !res.Found {
+	if res.Result == notFoundResult {
 		writer.WriteHeader(http.StatusNotFound)
 		return
 	}

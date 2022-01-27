@@ -14,12 +14,12 @@ import (
 	"github.com/Financial-Times/go-logger"
 	tid "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/gorilla/mux"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	testLog "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 var (
@@ -265,7 +265,7 @@ func TestReadData(t *testing.T) {
 	}
 
 	rawmsg := json.RawMessage(rawModel)
-	dummyEsService := &dummyEsService{found: true, source: &rawmsg}
+	dummyEsService := &dummyEsService{found: true, source: rawmsg}
 	writerService := NewHandler(dummyEsService, []string{"genres"})
 
 	servicesRouter := mux.NewRouter()
@@ -388,7 +388,7 @@ func TestDeleteDataNotFound(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	dummyEsService := &dummyEsService{found: false}
+	dummyEsService := &dummyEsService{result: "not_found"}
 	writerService := NewHandler(dummyEsService, []string{"organisations"})
 
 	servicesRouter := mux.NewRouter()
@@ -507,7 +507,8 @@ type dummyEsService struct {
 	noop         bool
 	returnsError error
 	found        bool
-	source       *json.RawMessage
+	result       string
+	source       json.RawMessage
 	ids          chan service.EsIDTypePair
 }
 
@@ -524,7 +525,7 @@ func (service *dummyEsService) LoadData(ctx context.Context, conceptType string,
 func (service *dummyEsService) CleanupData(ctx context.Context, concept service.Concept) {
 }
 
-func (service *dummyEsService) ReadData(conceptType string, uuid string) (*elastic.GetResult, error) {
+func (service *dummyEsService) ReadData(uuid string) (*elastic.GetResult, error) {
 	if service.returnsError != nil {
 		return nil, service.returnsError
 	}
@@ -535,14 +536,14 @@ func (service *dummyEsService) DeleteData(ctx context.Context, conceptType strin
 	if service.returnsError != nil {
 		return nil, service.returnsError
 	}
-	return &elastic.DeleteResponse{Found: service.found}, nil
+	return &elastic.DeleteResponse{Result: service.result}, nil
 }
 
-func (service *dummyEsService) LoadBulkData(conceptType string, uuid string, payload interface{}) {
+func (service *dummyEsService) LoadBulkData(uuid string, payload interface{}) {
 
 }
 
-func (service *dummyEsService) PatchUpdateConcept(ctx context.Context, conceptType string, uuid string, payload service.PayloadPatch) {
+func (service *dummyEsService) PatchUpdateConcept(uuid string, payload service.PayloadPatch) {
 
 }
 
