@@ -15,8 +15,6 @@ services:
   elastic-search:
     image: elasticsearch:7.10.1
     environment:
-        http.host: "0.0.0.0"
-        transport.host: "127.0.0.1"
-        xpack.security.enabled: "false"
+        discovery.type: "single-node"
     ports:
       - "9201:9200"

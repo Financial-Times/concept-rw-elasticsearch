@@ -241,6 +241,7 @@ func (h *Handler) ReadData(writer http.ResponseWriter, request *http.Request) {
 	esModel := service.EsPersonConceptModel{}
 	err = json.Unmarshal(getResult.Source, &esModel)
 	if err != nil {
+		log.Error(err.Error())
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -248,7 +249,12 @@ func (h *Handler) ReadData(writer http.ResponseWriter, request *http.Request) {
 
 	writer.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(writer)
-	enc.Encode(esModel)
+	err = enc.Encode(esModel)
+	if err != nil {
+		log.Error(err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 // DeleteData handles a delete for a concept
