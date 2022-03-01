@@ -289,7 +289,7 @@ func (h *Handler) GetAllIds(writer http.ResponseWriter, request *http.Request) {
 
 	writer.Header().Set("Content-Type", "text/plain")
 	writer.WriteHeader(http.StatusOK)
-	ids := h.elasticService.GetAllIds(ctx)
+	ids := h.elasticService.GetAllIds(ctx, includeTypes)
 	i := 0
 	for id := range ids {
 		if includeTypes {
