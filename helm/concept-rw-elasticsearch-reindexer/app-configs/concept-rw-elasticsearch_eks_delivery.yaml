@@ -1,6 +1,4 @@
 # Values used for the deployed application.
 replicaCount: 2
 service:
-  name: concept-rw-elasticsearch
-env:
-  LOG_LEVEL: debug
+  name: concept-rw-elasticsearch-reindexer

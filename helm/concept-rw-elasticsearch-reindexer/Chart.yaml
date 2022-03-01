@@ -1,0 +1,4 @@
+apiVersion: v1
+description: concept-rw-elasticsearch-reindexer Helm chart for Kubernetes
+name: concept-rw-elasticsearch-reindexer
+version: 0.0.0
