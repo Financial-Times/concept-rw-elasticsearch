@@ -58,7 +58,7 @@ type EsService interface {
 	CloseBulkProcessor() error
 	GetClusterHealth() (*elastic.ClusterHealthResponse, error)
 	IsIndexReadOnly() (bool, string, error)
-	GetAllIds(ctx context.Context) chan EsIDTypePair
+	GetAllIds(ctx context.Context, includeTypes bool) chan EsIDTypePair
 }
 
 func NewEsService(ch chan *elastic.Client, indexName string, bulkProcessorConfig *BulkProcessorConfig) EsService {
@@ -415,7 +415,7 @@ func (es *esService) CloseBulkProcessor() error {
 	return es.bulkProcessor.Close()
 }
 
-func (es *esService) GetAllIds(ctx context.Context) chan EsIDTypePair {
+func (es *esService) GetAllIds(ctx context.Context, includeTypes bool) chan EsIDTypePair {
 	ids := make(chan EsIDTypePair)
 
 	go func() {
@@ -426,14 +426,14 @@ func (es *esService) GetAllIds(ctx context.Context) chan EsIDTypePair {
 			Query(elastic.NewMatchAllQuery()).
 			Sort("_doc", true).
 			Size(1000).
-			FetchSource(true)
+			FetchSource(includeTypes)
 
 		es.RLock()
 		defer es.RUnlock()
 
 		var err error
 		for {
-			r, err = es.processScrollPage(ctx, r, ids)
+			r, err = es.processScrollPage(ctx, r, ids, includeTypes)
 			if r == nil || err != nil {
 				return
 			}
@@ -443,7 +443,7 @@ func (es *esService) GetAllIds(ctx context.Context) chan EsIDTypePair {
 	return ids
 }
 
-func (es *esService) processScrollPage(ctx context.Context, r *elastic.ScrollService, ch chan EsIDTypePair) (*elastic.ScrollService, error) {
+func (es *esService) processScrollPage(ctx context.Context, r *elastic.ScrollService, ch chan EsIDTypePair, includeTypes bool) (*elastic.ScrollService, error) {
 	res, err := r.Do(ctx)
 	if err == io.EOF {
 		return nil, nil
@@ -454,12 +454,16 @@ func (es *esService) processScrollPage(ctx context.Context, r *elastic.ScrollSer
 
 	scrollId := res.ScrollId
 	for _, c := range res.Hits.Hits {
-		esModel := EsConceptModel{}
-		err = json.Unmarshal(c.Source, &esModel)
-		if err != nil {
-			return nil, err
+		if includeTypes {
+			esModel := EsConceptModel{}
+			err = json.Unmarshal(c.Source, &esModel)
+			if err != nil {
+				return nil, err
+			}
+			ch <- EsIDTypePair{ID: c.Id, Type: esModel.Type}
+		} else {
+			ch <- EsIDTypePair{ID: c.Id}
 		}
-		ch <- EsIDTypePair{ID: c.Id, Type: esModel.Type}
 	}
 
 	return elastic.NewScrollService(es.elasticClient).ScrollId(scrollId), nil
