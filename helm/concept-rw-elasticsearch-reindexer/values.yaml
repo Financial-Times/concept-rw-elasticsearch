@@ -1,12 +1,12 @@
-# Default values for concept-rw-elasticsearch.
+# Default values for concept-rw-elasticsearch-reindexer.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 service:
-  name: "concept-rw-elasticsearch" # The name of the service, should be defined in the specific app-configs folder.
+  name: "concept-rw-elasticsearch-reindexer" # The name of the service, should be defined in the specific app-configs folder.
   hasHealthcheck: "true"
 replicaCount: 2
 image:
-  repository: coco/concept-rw-elasticsearch
+  repository: coco/concept-rw-elasticsearch-reindexer
   pullPolicy: Always
 resources:
   requests:
