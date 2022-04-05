@@ -12,7 +12,9 @@ jobs:
           ELASTICSEARCH_TEST_URL: http://localhost:9200
           CIRCLE_TEST_REPORTS: /tmp/test-results
           CIRCLE_COVERAGE_REPORT: /tmp/coverage-results
-      - image:  elasticsearch:5.3
+      - image:  elasticsearch:7.10.1
+        environment:
+          discovery.type: single-node
     steps:
       - checkout
       - ft-golang-ci/build
@@ -20,8 +22,7 @@ jobs:
       - run:
           name: Load the mapping in ElasticSearch
           command: |
-            curl -sL https://raw.githubusercontent.com/Financial-Times/concept-search-index-mapping/master/mapping.json -o mapping.json
-            curl -s --request PUT ${ELASTICSEARCH_TEST_URL}/concept --data '@mapping.json'
+            curl -s --request PUT ${ELASTICSEARCH_TEST_URL}/concept --data '@configs/referenceSchema.json'
       - ft-golang-ci/test
 
 workflows:

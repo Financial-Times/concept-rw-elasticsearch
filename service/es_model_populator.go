@@ -78,6 +78,7 @@ func getEsConcept(concept AggregateConceptModel, conceptType string, publishRef 
 
 func newESConceptModel(uuid string, conceptType string, directType string, aliases []string, authorities []string, prefLabel string, publishRef string, isDeprecated bool, scopeNote string) (esModel *EsConceptModel) {
 	esModel = &EsConceptModel{}
+	esModel.Type = conceptType
 	esModel.ApiUrl = mapper.APIURL(uuid, []string{directType}, "")
 	esModel.Id = mapper.IDURL(uuid)
 	esModel.Types = mapper.TypeURIs(getTypes(directType))

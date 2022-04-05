@@ -11,10 +11,10 @@ import (
 	"github.com/Financial-Times/concept-rw-elasticsearch/service"
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 var (
@@ -286,8 +286,8 @@ func (m *EsServiceMock) LoadData(ctx context.Context, conceptType string, uuid s
 	return args.Bool(0), args.Get(1).(*elastic.IndexResponse), args.Error(1)
 }
 
-func (m *EsServiceMock) ReadData(conceptType string, uuid string) (*elastic.GetResult, error) {
-	args := m.Called(conceptType, uuid)
+func (m *EsServiceMock) ReadData(uuid string) (*elastic.GetResult, error) {
+	args := m.Called(uuid)
 	return args.Get(0).(*elastic.GetResult), args.Error(1)
 }
 
@@ -296,12 +296,12 @@ func (m *EsServiceMock) DeleteData(ctx context.Context, conceptType string, uuid
 	return args.Get(0).(*elastic.DeleteResponse), args.Error(1)
 }
 
-func (m *EsServiceMock) LoadBulkData(conceptType string, uuid string, payload interface{}) {
-	m.Called(conceptType, uuid, payload)
+func (m *EsServiceMock) LoadBulkData(uuid string, payload interface{}) {
+	m.Called(uuid, payload)
 }
 
-func (m *EsServiceMock) PatchUpdateConcept(ctx context.Context, conceptType string, uuid string, payload service.PayloadPatch) {
-	m.Called(ctx, conceptType, uuid, payload)
+func (m *EsServiceMock) PatchUpdateConcept(uuid string, payload service.PayloadPatch) {
+	m.Called(uuid, payload)
 }
 
 func (m *EsServiceMock) CleanupData(ctx context.Context, concept service.Concept) {
@@ -332,7 +332,7 @@ func parseHealthcheck(healthcheckJSON string) ([]fthealth.CheckResult, error) {
 	return result.Checks, err
 }
 
-func (m *EsServiceMock) GetAllIds(ctx context.Context) chan service.EsIDTypePair {
+func (m *EsServiceMock) GetAllIds(ctx context.Context, includeTypes bool) chan service.EsIDTypePair {
 	args := m.Called()
 	return args.Get(0).(chan service.EsIDTypePair)
 }

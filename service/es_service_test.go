@@ -11,11 +11,11 @@ import (
 
 	"github.com/Financial-Times/go-logger"
 	tid "github.com/Financial-Times/transactionid-utils-go"
+	"github.com/olivere/elastic/v7"
 	log "github.com/sirupsen/logrus"
 	testLog "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/google/uuid"
 )
@@ -37,7 +37,7 @@ func init() {
 func TestNoElasticClient(t *testing.T) {
 	service := esService{sync.RWMutex{}, nil, nil, "test", nil, time.Now}
 
-	_, err := service.ReadData("any", "any")
+	_, err := service.ReadData("any")
 
 	assert.Equal(t, ErrNoElasticClient, err, "error response")
 }
@@ -200,6 +200,7 @@ func getElasticClient(t *testing.T, url string) *elastic.Client {
 func writeTestDocument(es EsService, conceptType string, uuid string) (EsConceptModel, bool, *elastic.IndexResponse, error) {
 	payload := EsConceptModel{
 		Id:           uuid,
+		Type:         conceptType,
 		ApiUrl:       fmt.Sprintf("%s/%s/%s", apiBaseURL, conceptType, uuid),
 		PrefLabel:    fmt.Sprintf("Test concept %s %s", conceptType, uuid),
 		Types:        []string{},

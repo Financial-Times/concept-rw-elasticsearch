@@ -58,6 +58,7 @@ type EsModel interface{}
 
 type EsConceptModel struct {
 	Id                     string          `json:"id"`
+	Type                   string          `json:"type,omitempty"`
 	ApiUrl                 string          `json:"apiUrl"`
 	PrefLabel              string          `json:"prefLabel"`
 	Types                  []string        `json:"types"`
@@ -96,7 +97,7 @@ type ConceptMetrics struct {
 
 type EsPersonConceptModel struct {
 	*EsConceptModel
-	IsFTAuthor string `json:"isFTAuthor"`
+	IsFTAuthor string `json:"isFTAuthor,omitempty"`
 }
 
 type EsPersonConceptPatch struct {

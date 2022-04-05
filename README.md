@@ -42,7 +42,7 @@ docker-compose -f docker-compose-tests.yml down -v
 
 To run elasticsearch locally with docker execute:
 ```
-docker run -p 9200:9200 -e "http.host=0.0.0.0" -e "transport.host=127.0.0.1" -e "xpack.security.enabled=false"  docker.elastic.co/elasticsearch/elasticsearch:5.3.3
+docker run -p 9200:9200 -e "discovery.type=single-node"  docker.elastic.co/elasticsearch/elasticsearch:7.10.1
 ```
 
 Writing data to the ElasticSearch instance will create shards. If running a local standalone ElasticSearch instance, this may turn the ElasticSearch status YELLOW. To make it GREEN, make a PUT request to `/_settings` with the following JSON:
