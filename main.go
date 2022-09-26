@@ -104,20 +104,20 @@ func main() {
 	logger.InitLogger(*appSystemCode, *logLevel)
 	logger.Infof("[Startup] The writer handles the following concept types: %v\n", *elasticsearchWhitelistedConceptTypes)
 
+	awsSession, sessionErr := session.NewSession()
+	if sessionErr != nil {
+		log.WithError(sessionErr).Fatal("Failed to initialize AWS session")
+	}
+	credValues, err := awsSession.Config.Credentials.Get()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to obtain AWS credentials values")
+	}
+	log.Infof("Obtaining AWS credentials by using [%s] as provider", credValues.ProviderName)
+	accessConfig := service.NewAccessConfig(credValues.AccessKeyID, credValues.SecretAccessKey, credValues.SessionToken, *esEndpoint, *esTraceLogging)
+
 	// It seems that once we have a connection, we can lose and reconnect to Elastic OK
 	// so just keep going until successful
 	app.Action = func() {
-		awsSession, sessionErr := session.NewSession()
-		if sessionErr != nil {
-			log.WithError(sessionErr).Fatal("Failed to initialize AWS session")
-		}
-		credValues, err := awsSession.Config.Credentials.Get()
-		if err != nil {
-			log.WithError(err).Fatal("Failed to obtain AWS credentials values")
-		}
-		log.Infof("Obtaining AWS credentials by using [%s] as provider", credValues.ProviderName)
-		accessConfig := service.NewAccessConfig(credValues.AccessKeyID, credValues.SecretAccessKey, *esEndpoint, *esTraceLogging)
-
 		ecc := make(chan *elastic.Client)
 		go func() {
 			defer close(ecc)
@@ -147,7 +147,7 @@ func main() {
 		routeRequests(port, handler, healthService)
 	}
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		logger.Errorf("App could not start, error=[%s]\n", err)
 		return

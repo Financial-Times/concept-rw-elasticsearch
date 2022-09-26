@@ -11,12 +11,13 @@ import (
 type EsAccessConfig struct {
 	accessKey    string
 	secretKey    string
+	sessionToken string
 	esEndpoint   string
 	traceLogging bool
 }
 
-func NewAccessConfig(accessKey string, secretKey string, endpoint string, tracelogging bool) EsAccessConfig {
-	return EsAccessConfig{accessKey: accessKey, secretKey: secretKey, esEndpoint: endpoint, traceLogging: tracelogging}
+func NewAccessConfig(accessKey string, secretKey string, sessionToken string, endpoint string, tracelogging bool) EsAccessConfig {
+	return EsAccessConfig{accessKey: accessKey, secretKey: secretKey, sessionToken: sessionToken, esEndpoint: endpoint, traceLogging: tracelogging}
 }
 
 type AWSSigningTransport struct {
@@ -35,6 +36,7 @@ func newAmazonClient(config EsAccessConfig) (*elastic.Client, error) {
 		Credentials: awsauth.Credentials{
 			AccessKeyID:     config.accessKey,
 			SecretAccessKey: config.secretKey,
+			SecurityToken:   config.sessionToken,
 		},
 		HTTPClient: http.DefaultClient,
 	}
