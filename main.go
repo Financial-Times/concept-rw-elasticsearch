@@ -12,6 +12,7 @@ import (
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/gorilla/mux"
 	cli "github.com/jawher/mow.cli"
 	"github.com/olivere/elastic/v7"
@@ -32,16 +33,6 @@ func main() {
 		Value:  "8080",
 		Desc:   "Port to listen on",
 		EnvVar: "PORT",
-	})
-	accessKey := app.String(cli.StringOpt{
-		Name:   "aws-access-key",
-		Desc:   "AWS ACCESS KEY",
-		EnvVar: "AWS_ACCESS_KEY_ID",
-	})
-	secretKey := app.String(cli.StringOpt{
-		Name:   "aws-secret-access-key",
-		Desc:   "AWS SECRET ACCESS KEY",
-		EnvVar: "AWS_SECRET_ACCESS_KEY",
 	})
 	esEndpoint := app.String(cli.StringOpt{
 		Name:   "elasticsearch-endpoint",
@@ -110,14 +101,23 @@ func main() {
 		EnvVar: "LOG_LEVEL",
 	})
 
-	accessConfig := service.NewAccessConfig(*accessKey, *secretKey, *esEndpoint, *esTraceLogging)
-
 	logger.InitLogger(*appSystemCode, *logLevel)
 	logger.Infof("[Startup] The writer handles the following concept types: %v\n", *elasticsearchWhitelistedConceptTypes)
 
 	// It seems that once we have a connection, we can lose and reconnect to Elastic OK
 	// so just keep going until successful
 	app.Action = func() {
+		awsSession, sessionErr := session.NewSession()
+		if sessionErr != nil {
+			log.WithError(sessionErr).Fatal("Failed to initialize AWS session")
+		}
+		credValues, err := awsSession.Config.Credentials.Get()
+		if err != nil {
+			log.WithError(err).Fatal("Failed to obtain AWS credentials values")
+		}
+		log.Infof("Obtaining AWS credentials by using [%s] as provider", credValues.ProviderName)
+		accessConfig := service.NewAccessConfig(credValues.AccessKeyID, credValues.SecretAccessKey, *esEndpoint, *esTraceLogging)
+
 		ecc := make(chan *elastic.Client)
 		go func() {
 			defer close(ecc)

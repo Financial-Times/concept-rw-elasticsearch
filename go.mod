@@ -9,6 +9,7 @@ require (
 	github.com/Financial-Times/neo-model-utils-go v0.0.0-20170405082310-1a5407658c84
 	github.com/Financial-Times/service-status-go v0.0.0-20160323111542-3f5199736a3d
 	github.com/Financial-Times/transactionid-utils-go v0.2.0
+	github.com/aws/aws-sdk-go v1.44.105
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.6.2
 	github.com/jawher/mow.cli v1.0.4
@@ -24,14 +25,15 @@ require (
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/hashicorp/go-version v0.0.0-20180716215031-270f2f71b1ee // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.1.1 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
-	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect
