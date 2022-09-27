@@ -9,7 +9,7 @@ require (
 	github.com/Financial-Times/neo-model-utils-go v0.0.0-20170405082310-1a5407658c84
 	github.com/Financial-Times/service-status-go v0.0.0-20160323111542-3f5199736a3d
 	github.com/Financial-Times/transactionid-utils-go v0.2.0
-	github.com/aws/aws-sdk-go v1.44.105
+	github.com/aws/aws-sdk-go v1.44.83
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.6.2
 	github.com/jawher/mow.cli v1.0.4
