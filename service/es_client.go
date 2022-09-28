@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -31,8 +32,13 @@ type AWSSigningTransport struct {
 // RoundTrip implementation
 func (a AWSSigningTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	signer := awsSigner.NewSigner(a.Credentials)
-	body := strings.NewReader("")
-	_, err := signer.Sign(req, body, "es", a.Region, time.Now())
+	b, err := io.ReadAll(req.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request body with error: %w", err)
+	}
+	body := strings.NewReader(string(b))
+	defer req.Body.Close()
+	_, err = signer.Sign(req, body, "es", a.Region, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign request: %w", err)
 	}
