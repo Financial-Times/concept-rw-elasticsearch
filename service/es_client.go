@@ -43,6 +43,7 @@ func newAmazonClient(config EsAccessConfig, region string) (*elastic.Client, err
 	signingTransport := AWSSigningTransport{
 		Credentials: config.awsCreds,
 		HTTPClient:  http.DefaultClient,
+		Region:      region,
 	}
 	signingClient := &http.Client{Transport: http.RoundTripper(signingTransport)}
 
