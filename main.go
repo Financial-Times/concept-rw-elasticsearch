@@ -119,8 +119,9 @@ func main() {
 				if err != nil {
 					log.WithError(err).Fatal("Failed to obtain AWS credentials values")
 				}
+				awsCreds := awsSession.Config.Credentials
 				log.Infof("Obtaining AWS credentials by using [%s] as provider", credValues.ProviderName)
-				accessConfig := service.NewAccessConfig(credValues.AccessKeyID, credValues.SecretAccessKey, credValues.SessionToken, *esEndpoint, *esTraceLogging)
+				accessConfig := service.NewAccessConfig(awsCreds, *esEndpoint, *esTraceLogging)
 				ec, err := service.NewElasticClient(*esRegion, accessConfig)
 				if err == nil {
 					logger.Info("connected to ElasticSearch")
