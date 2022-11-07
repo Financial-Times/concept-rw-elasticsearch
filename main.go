@@ -12,6 +12,8 @@ import (
 	"github.com/Financial-Times/go-logger"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/gorilla/mux"
 	cli "github.com/jawher/mow.cli"
@@ -51,6 +53,16 @@ func main() {
 		Value:  "concepts",
 		Desc:   "The name of the elasticsearch index",
 		EnvVar: "ELASTICSEARCH_INDEX",
+	})
+	accessKey := app.String(cli.StringOpt{
+		Name:   "aws-access-key",
+		Desc:   "AWS ACCESS KEY",
+		EnvVar: "AWS_ACCESS_KEY_ID",
+	})
+	secretKey := app.String(cli.StringOpt{
+		Name:   "aws-secret-access-key",
+		Desc:   "AWS SECRET ACCESS KEY",
+		EnvVar: "AWS_SECRET_ACCESS_KEY",
 	})
 
 	nrOfElasticsearchWorkers := app.Int(cli.IntOpt{
@@ -111,7 +123,7 @@ func main() {
 		go func() {
 			defer close(ecc)
 			for {
-				awsSession, sessionErr := session.NewSession()
+				awsSession, sessionErr := getAWSSession(*accessKey, *secretKey)
 				if sessionErr != nil {
 					log.WithError(sessionErr).Fatal("Failed to initialize AWS session")
 				}
@@ -152,6 +164,15 @@ func main() {
 		logger.Errorf("App could not start, error=[%s]\n", err)
 		return
 	}
+}
+
+func getAWSSession(accessKey, secretKey string) (*session.Session, error) {
+	// For testing cases
+	if accessKey != "" && secretKey != "" {
+		creds := credentials.NewStaticCredentials(accessKey, secretKey, "")
+		return session.NewSession(&aws.Config{Credentials: creds})
+	}
+	return session.NewSession()
 }
 
 func routeRequests(port *string, handler *resources.Handler, healthService *health.HealthService) {

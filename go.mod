@@ -17,7 +17,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rcrowley/go-metrics v0.0.0-20180503174638-e2704e165165
 	github.com/sirupsen/logrus v1.0.6
-	github.com/smartystreets/go-aws-auth v0.0.0-20180515143844-0c1422d1fdb9
 	github.com/stretchr/testify v1.6.1
 )
 
