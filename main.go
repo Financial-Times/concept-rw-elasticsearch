@@ -52,33 +52,34 @@ func main() {
 		Desc:   "The name of the elasticsearch index",
 		EnvVar: "ELASTICSEARCH_INDEX",
 	})
-
 	nrOfElasticsearchWorkers := app.Int(cli.IntOpt{
 		Name:   "bulk-workers",
 		Value:  2,
 		Desc:   "Number of workers used in elasticsearch bulk processor",
 		EnvVar: "ELASTICSEARCH_WORKERS",
 	})
-
 	nrOfElasticsearchRequests := app.Int(cli.IntOpt{
 		Name:   "bulk-requests",
 		Value:  1000,
 		Desc:   "Elasticsearch bulk processor should commit if requests >= 1000 (default)",
 		EnvVar: "ELASTICSEARCH_REQUEST_NR",
 	})
-
 	elasticsearchBulkSize := app.Int(cli.IntOpt{
 		Name:   "bulk-size",
 		Value:  2 << 20,
 		Desc:   "Elasticsearch bulk processor should commit requests if size of requests >= 2 MB (default)",
 		EnvVar: "ELASTICSEARCH_BULK_SIZE",
 	})
-
 	elasticsearchFlushInterval := app.Int(cli.IntOpt{
 		Name:   "flush-interval",
 		Value:  10,
 		Desc:   "How frequently should the elasticsearch bulk processor commit requests",
 		EnvVar: "ELASTICSEARCH_FLUSH_INTERVAL",
+	})
+	publicAPIHost := app.String(cli.StringOpt{
+		Name:   "apiURL",
+		Desc:   "API Gateway URL used when building the thing ID url in the response, in the format scheme://host",
+		EnvVar: "API_HOST",
 	})
 
 	elasticsearchWhitelistedConceptTypes := app.String(cli.StringOpt{
@@ -139,7 +140,10 @@ func main() {
 		esService := service.NewEsService(ecc, *indexName, &bulkProcessorConfig)
 
 		allowedConceptTypes := strings.Split(*elasticsearchWhitelistedConceptTypes, ",")
-		handler := resources.NewHandler(esService, allowedConceptTypes)
+		handler, err := resources.NewHandler(esService, allowedConceptTypes, *publicAPIHost)
+		if err != nil {
+			log.WithError(err).Fatal("Creating http handler")
+		}
 		defer handler.Close()
 
 		//create health service

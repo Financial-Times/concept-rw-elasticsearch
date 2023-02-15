@@ -18,6 +18,8 @@ var testConceptModelJSON = `{"uuid":"2384fa7a-d514-3d6a-a0ea-3a711f66d0d8","type
 
 var testIntermediateConceptModelJSON = `{"uuid":"7e3f1354-53ba-3c3e-b9bb-5fcb8941df8c","prefLabel":"ICOmedy","type":"AlphavilleSeries","authority":"TME","authorityValue":"NDQ1NjhiMzktMjJmNy00OWEzLWExNDctNDFiNDk4OGU2MTdj-QWxwaGF2aWxsZVNlcmllc0NsYXNzaWZpY2F0aW9u"}`
 
+var publicAPIHost = "http://api.ft.com"
+
 func TestConvertToESConceptModel(t *testing.T) {
 
 	tests := []struct {
@@ -131,7 +133,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 	for _, testModel := range tests {
 		testTID := tid.NewTransactionID()
 
-		actual := ConvertConceptToESConceptModel(testModel.conceptModel, "organisations", testTID)
+		actual, _ := ConvertConceptToESConceptModel(testModel.conceptModel, "organisations", testTID, publicAPIHost)
 		esModel := actual.(*EsConceptModel)
 		assert.Equal(t, testModel.esConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esConceptModel.Id, esModel.Id))
 		assert.Equal(t, testModel.esConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esConceptModel.Type, esModel.Type))
@@ -282,7 +284,8 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 		t.Run(testModel.testName, func(t *testing.T) {
 			testTID := tid.NewTransactionID()
 
-			actual := ConvertAggregateConceptToESConceptModel(testModel.conceptModel, "organisations", testTID)
+			actual, err := ConvertAggregateConceptToESConceptModel(testModel.conceptModel, "organisations", testTID, publicAPIHost)
+			assert.NoError(t, err)
 			esModel := actual.(*EsConceptModel)
 			assert.Equal(t, testModel.esConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esConceptModel.Id, esModel.Id))
 			assert.Equal(t, testModel.esConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esConceptModel.Type, esModel.Type))
@@ -395,7 +398,8 @@ func TestConvertPersonToESConceptModel(t *testing.T) {
 	for _, testModel := range tests {
 		testTID := tid.NewTransactionID()
 
-		actual := ConvertConceptToESConceptModel(testModel.conceptModel, "people", testTID)
+		actual, err := ConvertConceptToESConceptModel(testModel.conceptModel, "people", testTID, publicAPIHost)
+		assert.NoError(t, err)
 		esModel := actual.(*EsPersonConceptModel)
 		assert.Equal(t, testModel.esPersonConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esPersonConceptModel.Id, esModel.Id))
 		assert.Equal(t, testModel.esPersonConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esPersonConceptModel.Type, esModel.Type))
@@ -454,7 +458,7 @@ func TestConvertMembershipToAggregateConceptModel(t *testing.T) {
 	for _, testModel := range tests {
 		t.Run(testModel.testName, func(t *testing.T) {
 			testTID := tid.NewTransactionID()
-			actual := ConvertAggregateConceptToESConceptModel(testModel.aggregateConceptModel, "memberships", testTID)
+			actual, _ := ConvertAggregateConceptToESConceptModel(testModel.aggregateConceptModel, "memberships", testTID, publicAPIHost)
 			esModel := actual.(*EsMembershipModel)
 			assert.Equal(t, testModel.esMembershipModel, *esModel)
 		})
@@ -547,7 +551,8 @@ func TestConvertPersonToAggregateConceptModel(t *testing.T) {
 		t.Run(testModel.name, func(t *testing.T) {
 			testTID := tid.NewTransactionID()
 
-			actual := ConvertAggregateConceptToESConceptModel(testModel.aggregateConceptModel, "people", testTID)
+			actual, err := ConvertAggregateConceptToESConceptModel(testModel.aggregateConceptModel, "people", testTID, publicAPIHost)
+			assert.NoError(t, err)
 			esModel := actual.(*EsPersonConceptModel)
 			assert.Equal(t, testModel.esPersonConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esPersonConceptModel.Id, esModel.Id))
 			assert.Equal(t, testModel.esPersonConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esPersonConceptModel.Type, esModel.Type))
