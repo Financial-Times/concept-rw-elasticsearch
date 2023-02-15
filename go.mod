@@ -1,6 +1,6 @@
 module github.com/Financial-Times/concept-rw-elasticsearch
 
-go 1.17
+go 1.19
 
 require (
 	github.com/Financial-Times/cm-graph-ontology v1.2.1
