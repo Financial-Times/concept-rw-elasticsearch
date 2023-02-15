@@ -28,13 +28,18 @@ jobs:
 workflows:
   tests_and_docker:
     jobs:
-      - build-and-test-project 
+      - build-and-test-project:
+          name: build-and-test-project
+          context: cm-team-github
       - ft-golang-ci/docker-build:
           name: build-docker-image
+          context: cm-team-github
           requires:
             - build-and-test-project
   snyk-scanning:
     jobs:
       - ft-golang-ci/scan:
           name: scan-dependencies
-          context: cm-team-snyk
+          context:
+            - cm-team-snyk
+            - cm-team-github
