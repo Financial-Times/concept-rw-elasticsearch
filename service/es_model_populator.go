@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	ontology "github.com/Financial-Times/cm-graph-ontology"
@@ -15,6 +14,7 @@ const (
 	organisation            = "organisations"
 	defaultIsFTAuthor       = "false"
 	directTypePublicCompany = "PublicCompany"
+	thingURL                = "http://api.ft.com/things/"
 )
 
 func ConvertConceptToESConceptModel(concept ConceptModel, conceptType, publishRef, publicAPIHost string) (EsModel, error) {
@@ -128,7 +128,7 @@ func newESConceptModel(uuid, conceptType, directType, prefLabel, publishRef, sco
 	esModel := &EsConceptModel{}
 	esModel.Type = conceptType
 	esModel.ApiUrl = apiURL
-	esModel.Id = thingURL(uuid, publicAPIHost)
+	esModel.Id = thingIDURL(uuid)
 	esModel.DirectType = directTypeURI
 	esModel.Types = typeURIs
 	esModel.Aliases = aliases
@@ -156,6 +156,6 @@ func reverse(strings []string) []string {
 	return reversed
 }
 
-func thingURL(uuid, baseURL string) string {
-	return strings.TrimRight(baseURL, "/") + "/things/" + uuid
+func thingIDURL(uuid string) string {
+	return thingURL + uuid
 }
