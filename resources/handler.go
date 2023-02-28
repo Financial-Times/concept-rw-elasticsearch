@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/Financial-Times/concept-rw-elasticsearch/service"
@@ -30,15 +31,24 @@ const (
 type Handler struct {
 	elasticService      service.EsService
 	allowedConceptTypes map[string]bool
+	publicAPIHost       string
 }
 
-func NewHandler(elasticService service.EsService, allowedConceptTypes []string) *Handler {
+func NewHandler(elasticService service.EsService, allowedConceptTypes []string, publicAPIHost string) (*Handler, error) {
+	if _, err := url.ParseRequestURI(publicAPIHost); err != nil {
+		return nil, err
+	}
+
 	allowedTypes := make(map[string]bool)
 	for _, v := range allowedConceptTypes {
 		allowedTypes[v] = true
 	}
 
-	return &Handler{elasticService: elasticService, allowedConceptTypes: allowedTypes}
+	return &Handler{
+		elasticService:      elasticService,
+		allowedConceptTypes: allowedTypes,
+		publicAPIHost:       publicAPIHost,
+	}, nil
 }
 
 // LoadData processes a single ES concept entity
@@ -155,15 +165,15 @@ func (h *Handler) processPayload(r *http.Request) (conceptType string, concept s
 	}
 
 	if aggConceptModel {
-		concept, esModel, err = processAggregateConceptModel(r.Context(), uuid, conceptType, body)
+		concept, esModel, err = processAggregateConceptModel(r.Context(), uuid, conceptType, h.publicAPIHost, body)
 	} else {
-		concept, esModel, err = processConceptModel(r.Context(), uuid, conceptType, body)
+		concept, esModel, err = processConceptModel(r.Context(), uuid, conceptType, h.publicAPIHost, body)
 	}
 
 	return conceptType, concept, esModel, err
 }
 
-func processConceptModel(ctx context.Context, uuid string, conceptType string, body []byte) (concept service.ConceptModel, payload service.EsModel, err error) {
+func processConceptModel(ctx context.Context, uuid, conceptType, publicAPIHost string, body []byte) (concept service.ConceptModel, payload service.EsModel, err error) {
 	err = json.Unmarshal(body, &concept)
 	if err != nil {
 		log.WithError(err).Info("Failed to unmarshal body into concept model.")
@@ -186,11 +196,11 @@ func processConceptModel(ctx context.Context, uuid string, conceptType string, b
 		err = nil // blank error just in case
 	}
 
-	payload = service.ConvertConceptToESConceptModel(concept, conceptType, transactionID)
+	payload, err = service.ConvertConceptToESConceptModel(concept, conceptType, transactionID, publicAPIHost)
 	return concept, payload, err
 }
 
-func processAggregateConceptModel(ctx context.Context, uuid string, conceptType string, body []byte) (concept service.AggregateConceptModel, esModel service.EsModel, err error) {
+func processAggregateConceptModel(ctx context.Context, uuid, conceptType, publicAPIHost string, body []byte) (concept service.AggregateConceptModel, esModel service.EsModel, err error) {
 	err = json.Unmarshal(body, &concept)
 	if err != nil {
 		log.WithError(err).Info("Failed to unmarshal body into aggregate concept model.")
@@ -212,7 +222,7 @@ func processAggregateConceptModel(ctx context.Context, uuid string, conceptType 
 		log.WithError(err).WithField(tid.TransactionIDKey, transactionID).Warn("Transaction ID not found to process aggregate concept model. Generated new transaction ID")
 	}
 
-	esModel = service.ConvertAggregateConceptToESConceptModel(concept, conceptType, transactionID)
+	esModel, err = service.ConvertAggregateConceptToESConceptModel(concept, conceptType, transactionID, publicAPIHost)
 	return concept, esModel, err
 }
 

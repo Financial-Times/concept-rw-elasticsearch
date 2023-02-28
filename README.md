@@ -35,6 +35,7 @@ go test -race ./...
 - To run unit and integration tests:
 
 ```
+GITHUB_USERNAME=<username> GITHUB_TOKEN=<gh token> \
 docker-compose -f docker-compose-tests.yml up -d --build && \
 docker logs -f test-runner && \
 docker-compose -f docker-compose-tests.yml down -v 
@@ -64,17 +65,23 @@ There is no ElasticSearch log message to say that the status is GREEN, but the a
 ```
 It is also possible to provide the elasticsearch endpoint, region and the port you expect the app to run on.
 
-Other parameters:
-- elasticsearch-endpoint
-- elasticsearch-region (if `local`: the application creates a simple client, without the amazon signing mechanism)
-- port
-- index-name (defaults to concept)
-- bulk-workers
-- bulk-requests
-- bulk-size
-- flush-interval
-- whitelisted-concepts - comma separated values with concept types that are supported by this writer. This is important if we don't want to end-up with automatically defined mapping types in our index.
-- elasticsearch-trace (defaults to false)
+Other options:
+
+```shell
+--app-system-code          System Code of the application (env $APP_SYSTEM_CODE) (default "concept-rw-elasticsearch")
+--port                     Port to listen on (env $PORT) (default "8080")
+--elasticsearch-endpoint   AES endpoint (env $ELASTICSEARCH_ENDPOINT) (default "http://localhost:9200")
+--elasticsearch-region     AES region (env $ELASTICSEARCH_REGION) (default "local")
+--index-name               The name of the elasticsearch index (env $ELASTICSEARCH_INDEX) (default "concepts")
+--bulk-workers             Number of workers used in elasticsearch bulk processor (env $ELASTICSEARCH_WORKERS) (default 2)
+--bulk-requests            Elasticsearch bulk processor should commit if requests >= 1000 (default) (env $ELASTICSEARCH_REQUEST_NR) (default 1000)
+--bulk-size                Elasticsearch bulk processor should commit requests if size of requests >= 2 MB (default) (env $ELASTICSEARCH_BULK_SIZE) (default 2097152)
+--flush-interval           How frequently should the elasticsearch bulk processor commit requests (env $ELASTICSEARCH_FLUSH_INTERVAL) (default 10)
+--apiURL                   API Gateway URL used when building the thing ID url in the response, in the format scheme://host (env $API_HOST)
+--whitelisted-concepts     List which are currently supported by elasticsearch (already have mapping associated) (env $ELASTICSEARCH_WHITELISTED_CONCEPTS) (default "genres,topics,sections,subjects,locations,brands,organisations,people,alphaville-series,memberships")
+--elasticsearch-trace      Whether to log ElasticSearch HTTP requests and responses (env $ELASTICSEARCH_TRACE)
+--logLevel                 App log level (env $LOG_LEVEL) (default "info")
+```
 
 The currently supported concept types are: "genres, topics, sections, subjects, locations, brands, organisations, people,  alphaville-series, memberships".
 

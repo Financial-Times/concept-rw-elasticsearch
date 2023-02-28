@@ -1,10 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
+	ontology "github.com/Financial-Times/cm-graph-ontology"
 	log "github.com/Financial-Times/go-logger"
-	"github.com/Financial-Times/neo-model-utils-go/mapper"
 )
 
 const (
@@ -13,23 +14,41 @@ const (
 	organisation            = "organisations"
 	defaultIsFTAuthor       = "false"
 	directTypePublicCompany = "PublicCompany"
+	thingURL                = "http://api.ft.com/things/"
 )
 
-func ConvertConceptToESConceptModel(concept ConceptModel, conceptType string, publishRef string) EsModel {
-	esModel := newESConceptModel(concept.UUID, conceptType, concept.DirectType, concept.Aliases, concept.GetAuthorities(), concept.PrefLabel, publishRef, concept.IsDeprecated, concept.ScopeNote)
+func ConvertConceptToESConceptModel(concept ConceptModel, conceptType, publishRef, publicAPIHost string) (EsModel, error) {
+	esModel, err := newESConceptModel(
+		concept.UUID,
+		conceptType,
+		concept.DirectType,
+		concept.PrefLabel,
+		publishRef,
+		concept.ScopeNote,
+		publicAPIHost,
+		concept.Aliases,
+		concept.GetAuthorities(),
+		concept.IsDeprecated)
+
+	if err != nil {
+		return nil, err
+	}
 
 	switch conceptType {
 	case person: // person type should not come through as the old model.
 		esPersonModel := &EsPersonConceptModel{
 			EsConceptModel: esModel,
 		}
-		return esPersonModel
+		return esPersonModel, nil
 	default:
-		return esModel
+		return esModel, nil
 	}
 }
 
-func ConvertAggregateConceptToESConceptModel(concept AggregateConceptModel, conceptType string, publishRef string) (esModel EsModel) {
+func ConvertAggregateConceptToESConceptModel(concept AggregateConceptModel, conceptType, publishRef, publicAPIHost string) (EsModel, error) {
+	var esModel EsModel
+	var esConceptModel *EsConceptModel
+	var err error
 
 	switch conceptType {
 	case memberships:
@@ -44,12 +63,14 @@ func ConvertAggregateConceptToESConceptModel(concept AggregateConceptModel, conc
 			Memberships:    ms,
 		}
 	case person:
+		esConceptModel, err = getEsConcept(concept, conceptType, publishRef, publicAPIHost)
+
 		esModel = &EsPersonConceptModel{
-			EsConceptModel: getEsConcept(concept, conceptType, publishRef),
+			EsConceptModel: esConceptModel,
 			IsFTAuthor:     defaultIsFTAuthor, // default as controlled by memberships concept
 		}
 	case organisation:
-		esConceptModel := getEsConcept(concept, conceptType, publishRef)
+		esConceptModel, err = getEsConcept(concept, conceptType, publishRef, publicAPIHost)
 
 		if concept.DirectType == directTypePublicCompany {
 			esConceptModel.CountryCode = concept.CountryCode
@@ -57,38 +78,59 @@ func ConvertAggregateConceptToESConceptModel(concept AggregateConceptModel, conc
 		}
 		esModel = esConceptModel
 	default:
-		esModel = getEsConcept(concept, conceptType, publishRef)
+		esModel, err = getEsConcept(concept, conceptType, publishRef, publicAPIHost)
 	}
 
-	return esModel
+	return esModel, err
 }
 
-func getEsConcept(concept AggregateConceptModel, conceptType string, publishRef string) *EsConceptModel {
+func getEsConcept(concept AggregateConceptModel, conceptType, publishRef, publicAPIHost string) (*EsConceptModel, error) {
 	return newESConceptModel(
 		concept.PrefUUID,
 		conceptType,
 		concept.DirectType,
-		concept.Aliases,
-		concept.GetAuthorities(),
 		concept.PrefLabel,
 		publishRef,
-		concept.IsDeprecated,
-		concept.ScopeNote)
+		concept.ScopeNote,
+		publicAPIHost,
+		concept.Aliases,
+		concept.GetAuthorities(),
+		concept.IsDeprecated)
 }
 
-func newESConceptModel(uuid string, conceptType string, directType string, aliases []string, authorities []string, prefLabel string, publishRef string, isDeprecated bool, scopeNote string) (esModel *EsConceptModel) {
-	esModel = &EsConceptModel{}
-	esModel.Type = conceptType
-	esModel.ApiUrl = mapper.APIURL(uuid, []string{directType}, "")
-	esModel.Id = mapper.IDURL(uuid)
-	esModel.Types = mapper.TypeURIs(getTypes(directType))
-	directTypeArray := mapper.TypeURIs([]string{directType})
-	if len(directTypeArray) == 1 {
-		esModel.DirectType = directTypeArray[0]
-	} else {
-		log.WithField("conceptType", conceptType).WithField("prefUUID", uuid).Warn("More than one directType found during type mapping.")
+func newESConceptModel(uuid, conceptType, directType, prefLabel, publishRef, scopeNote, publicAPIHost string, aliases, authorities []string, isDeprecated bool) (*EsConceptModel, error) {
+	apiURL, err := ontology.APIURL(uuid, []string{directType}, publicAPIHost)
+	if err != nil {
+		return nil, err
 	}
 
+	typeURIs, err := ontology.FullTypeHierarchy(directType)
+	if err != nil {
+		return nil, fmt.Errorf("getting type hierarchy for %q: %w", directType, err)
+	}
+
+	directTypeURIs, err := ontology.TypeURIs([]string{directType})
+	if err != nil {
+		return nil, fmt.Errorf("getting type uris for %q: %w", directType, err)
+	}
+
+	var directTypeURI string
+	if len(directTypeURIs) != 1 {
+		log.
+			WithField("conceptType", conceptType).
+			WithField("prefUUID", uuid).
+			WithField("typeURIs", directTypeURIs).
+			Warn("Exactly one directType is expected during type mapping.")
+	} else {
+		directTypeURI = directTypeURIs[0]
+	}
+
+	esModel := &EsConceptModel{}
+	esModel.Type = conceptType
+	esModel.ApiUrl = apiURL
+	esModel.Id = thingIDURL(uuid)
+	esModel.DirectType = directTypeURI
+	esModel.Types = typeURIs
 	esModel.Aliases = aliases
 	esModel.PrefLabel = prefLabel
 	esModel.Authorities = authorities
@@ -97,17 +139,7 @@ func newESConceptModel(uuid string, conceptType string, directType string, alias
 	esModel.IsDeprecated = isDeprecated
 	esModel.ScopeNote = scopeNote
 
-	return esModel
-}
-
-func getTypes(conceptType string) []string {
-	conceptTypes := []string{conceptType}
-	parentType := mapper.ParentType(conceptType)
-	for parentType != "" {
-		conceptTypes = append(conceptTypes, parentType)
-		parentType = mapper.ParentType(parentType)
-	}
-	return reverse(conceptTypes)
+	return esModel, nil
 }
 
 func reverse(strings []string) []string {
@@ -122,4 +154,8 @@ func reverse(strings []string) []string {
 		reversed = append(reversed, strings[i])
 	}
 	return reversed
+}
+
+func thingIDURL(uuid string) string {
+	return thingURL + uuid
 }

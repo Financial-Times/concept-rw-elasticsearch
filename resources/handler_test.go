@@ -23,7 +23,8 @@ import (
 )
 
 var (
-	errTest = errors.New("test error")
+	errTest       = errors.New("test error")
+	publicAPIHost = "http://api.ft.com"
 )
 
 func init() {
@@ -34,7 +35,8 @@ func TestCreateNewESWriter(t *testing.T) {
 	dummyEsService := &dummyEsService{}
 
 	allowedTypes := []string{"organisations", "genres"}
-	writerService := NewHandler(dummyEsService, allowedTypes)
+	writerService, err := NewHandler(dummyEsService, allowedTypes, publicAPIHost)
+	assert.NoError(t, err)
 	assert.True(t, writerService.allowedConceptTypes["organisations"])
 	assert.True(t, writerService.allowedConceptTypes["genres"])
 	assert.False(t, writerService.allowedConceptTypes["something else"])
@@ -43,7 +45,8 @@ func TestCreateNewESWriter(t *testing.T) {
 func TestCreateNewESWriterWithEmptyWhitelist(t *testing.T) {
 	dummyEsService := &dummyEsService{}
 	var allowedTypes []string
-	writerService := NewHandler(dummyEsService, allowedTypes)
+	writerService, err := NewHandler(dummyEsService, allowedTypes, publicAPIHost)
+	assert.NoError(t, err)
 	assert.Equal(t, 0, len(writerService.allowedConceptTypes))
 }
 
@@ -193,7 +196,8 @@ func TestLoadData(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			dummyEsService := &dummyEsService{noop: tc.noop}
-			writerService := NewHandler(dummyEsService, []string{"valid-type"})
+			writerService, err := NewHandler(dummyEsService, []string{"valid-type"}, publicAPIHost)
+			assert.NoError(t, err)
 
 			servicesRouter := mux.NewRouter()
 			servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.LoadData).Methods("PUT")
@@ -233,7 +237,8 @@ func TestLoadDataEsClientServerErrors(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			dummyEsService := &dummyEsService{returnsError: tc.err}
-			writerService := NewHandler(dummyEsService, []string{"valid-type"})
+			writerService, err := NewHandler(dummyEsService, []string{"valid-type"}, publicAPIHost)
+			assert.NoError(t, err)
 
 			servicesRouter := mux.NewRouter()
 			servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.LoadData).Methods("PUT")
@@ -266,7 +271,8 @@ func TestReadData(t *testing.T) {
 
 	rawmsg := json.RawMessage(rawModel)
 	dummyEsService := &dummyEsService{found: true, source: rawmsg}
-	writerService := NewHandler(dummyEsService, []string{"genres"})
+	writerService, err := NewHandler(dummyEsService, []string{"genres"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.ReadData).Methods("GET")
@@ -299,7 +305,8 @@ func TestReadDataNotFound(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	dummyEsService := &dummyEsService{found: false}
-	writerService := NewHandler(dummyEsService, []string{"organisations"})
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.ReadData).Methods("GET")
@@ -323,7 +330,8 @@ func TestReadDataEsServerError(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	dummyEsService := &dummyEsService{returnsError: errTest}
-	writerService := NewHandler(dummyEsService, []string{"organisations"})
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.ReadData).Methods("GET")
@@ -347,7 +355,8 @@ func TestReadDataEsServerUnavailable(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	dummyEsService := &dummyEsService{returnsError: service.ErrNoElasticClient}
-	writerService := NewHandler(dummyEsService, []string{"organisations"})
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.ReadData).Methods("GET")
@@ -365,7 +374,8 @@ func TestDeleteData(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	dummyEsService := &dummyEsService{found: true}
-	writerService := NewHandler(dummyEsService, []string{"organisations"})
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.DeleteData).Methods("DELETE")
@@ -389,7 +399,8 @@ func TestDeleteDataNotFound(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	dummyEsService := &dummyEsService{result: "not_found"}
-	writerService := NewHandler(dummyEsService, []string{"organisations"})
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.DeleteData).Methods("DELETE")
@@ -413,7 +424,8 @@ func TestDeleteDataEsServerError(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	dummyEsService := &dummyEsService{returnsError: errTest}
-	writerService := NewHandler(dummyEsService, []string{"organisations"})
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.DeleteData).Methods("DELETE")
@@ -433,7 +445,7 @@ func TestProcessConceptModelWithoutTransactionID(t *testing.T) {
 	testUUID := "8ff7dfef-0330-3de0-b37a-2d6aa9c98580"
 	testBody := []byte(`{"uuid":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","alternativeIdentifiers":{"TME":["Mg==-R2VucmVz"],"uuids":["8ff7dfef-0330-3de0-b37a-2d6aa9c98580"]},"prefLabel":"Market Report","type":"Genre"}`)
 
-	_, payload, err := processConceptModel(context.Background(), testUUID, "genres", testBody)
+	_, payload, err := processConceptModel(context.Background(), testUUID, "genres", publicAPIHost, testBody)
 	assert.NoError(t, err)
 	assert.NotNil(t, payload)
 	assert.NotEmpty(t, payload.(*service.EsConceptModel).PublishReference)
@@ -447,7 +459,9 @@ func TestIDsEndpointReturnsIDsWithInvalidIncludeTypesValue(t *testing.T) {
 	ids := make(chan service.EsIDTypePair, 4)
 	dummyEsService := &dummyEsService{ids: ids}
 
-	h := NewHandler(dummyEsService, []string{"genres"})
+	h, err := NewHandler(dummyEsService, []string{"genres"}, publicAPIHost)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/?includeTypes=somethingDodgy", nil)
 
@@ -478,7 +492,9 @@ func TestIDsEndpointReturnsTypes(t *testing.T) {
 	ids := make(chan service.EsIDTypePair, 4)
 	dummyEsService := &dummyEsService{ids: ids}
 
-	h := NewHandler(dummyEsService, []string{"genres"})
+	h, err := NewHandler(dummyEsService, []string{"genres"}, publicAPIHost)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/?includeTypes=true", nil)
 

@@ -50,6 +50,11 @@ spec:
             configMapKeyRef:
               name: global-config
               key: aws.region
+        - name: API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: api.host.with.protocol.insecure
         ports:
         - containerPort: 8080
         livenessProbe:
