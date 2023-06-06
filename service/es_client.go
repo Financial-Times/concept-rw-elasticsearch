@@ -1,6 +1,7 @@
 package service
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -56,8 +57,12 @@ func (a AWSSigningTransport) RoundTrip(req *http.Request) (*http.Response, error
 func newAmazonClient(config EsAccessConfig, region string) (*elastic.Client, error) {
 	signingTransport := AWSSigningTransport{
 		Credentials: config.awsCreds,
-		HTTPClient:  http.DefaultClient,
-		Region:      region,
+		HTTPClient: &http.Client{
+			Transport: &http.Transport{
+				TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
+			},
+		},
+		Region: region,
 	}
 	signingClient := &http.Client{Transport: http.RoundTripper(signingTransport)}
 
