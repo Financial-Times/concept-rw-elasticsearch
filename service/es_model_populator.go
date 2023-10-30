@@ -53,14 +53,17 @@ func ConvertAggregateConceptToESConceptModel(concept AggregateConceptModel, conc
 
 	switch conceptType {
 	case memberships:
+		if len(concept.PersonUUID) != 1 || len(concept.OrganisationUUID) != 1 {
+			return nil, fmt.Errorf("ambiguous membership concept '%s', it has more than one HAS_MEMBER or HAS_ORGANISATION relationships", concept.PreferredUUID())
+		}
 		ms := make([]string, len(concept.MembershipRoles))
 		for i, m := range concept.MembershipRoles {
 			ms[i] = m.RoleUUID
 		}
 		esModel = &EsMembershipModel{
 			Id:             concept.PrefUUID,
-			PersonId:       concept.PersonUUID,
-			OrganisationId: concept.OrganisationUUID,
+			PersonId:       concept.PersonUUID[0],
+			OrganisationId: concept.OrganisationUUID[0],
 			Memberships:    ms,
 		}
 	case person:
