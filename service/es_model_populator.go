@@ -85,7 +85,7 @@ func ConvertAggregateConceptToESConceptModel(concept AggregateConceptModel, conc
 }
 
 func getEsConcept(concept AggregateConceptModel, conceptType, publishRef, publicAPIHost string) (*EsConceptModel, error) {
-	return newESConceptModel(
+	cm, err := newESConceptModel(
 		concept.PrefUUID,
 		conceptType,
 		concept.DirectType,
@@ -95,7 +95,18 @@ func getEsConcept(concept AggregateConceptModel, conceptType, publishRef, public
 		publicAPIHost,
 		concept.Aliases,
 		concept.GetAuthorities(),
-		concept.IsDeprecated)
+		concept.IsDeprecated,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if conceptType == organisation {
+		cm.NAICS = concept.NAICS
+	}
+
+	return cm, nil
 }
 
 func newESConceptModel(uuid, conceptType, directType, prefLabel, publishRef, scopeNote, publicAPIHost string, aliases, authorities []string, isDeprecated bool) (*EsConceptModel, error) {

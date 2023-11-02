@@ -47,6 +47,8 @@ type AggregateConceptModel struct {
 	IsDeprecated           bool   `json:"isDeprecated,omitempty"`
 	// Source representations
 	SourceRepresentations []SourceConcept `json:"sourceRepresentations"`
+	// NAICS
+	NAICS []NAICS `json:"naicsIndustryClassifications"`
 }
 
 type SourceConcept struct {
@@ -54,6 +56,10 @@ type SourceConcept struct {
 	Authority string `json:"authority"`
 }
 
+type NAICS struct {
+	UUID string `json:"uuid"`
+	Rank int    `json:"rank"`
+}
 type EsModel interface{}
 
 type EsConceptModel struct {
@@ -72,6 +78,7 @@ type EsConceptModel struct {
 	CountryCode            string          `json:"countryCode,omitempty"`
 	CountryOfIncorporation string          `json:"countryOfIncorporation,omitempty"`
 	Metrics                *ConceptMetrics `json:"metrics,omitempty"`
+	NAICS                  []NAICS         `json:"NAICS"`
 }
 
 type EsMembershipModel struct {
