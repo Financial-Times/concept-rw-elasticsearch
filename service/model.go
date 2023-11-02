@@ -48,7 +48,7 @@ type AggregateConceptModel struct {
 	// Source representations
 	SourceRepresentations []SourceConcept `json:"sourceRepresentations"`
 	// NAICS
-	NAICS []NAICS `json:"naicsIndustryClassifications"`
+	NAICS []NAICS `json:"naicsIndustryClassifications,omitempty"`
 }
 
 type SourceConcept struct {
@@ -78,7 +78,7 @@ type EsConceptModel struct {
 	CountryCode            string          `json:"countryCode,omitempty"`
 	CountryOfIncorporation string          `json:"countryOfIncorporation,omitempty"`
 	Metrics                *ConceptMetrics `json:"metrics,omitempty"`
-	NAICS                  []NAICS         `json:"NAICS"`
+	NAICS                  []NAICS         `json:"NAICS,omitempty"`
 }
 
 type EsMembershipModel struct {
