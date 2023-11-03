@@ -28,7 +28,8 @@ func ConvertConceptToESConceptModel(concept ConceptModel, conceptType, publishRe
 		publicAPIHost,
 		concept.Aliases,
 		concept.GetAuthorities(),
-		concept.IsDeprecated)
+		concept.IsDeprecated,
+		nil)
 
 	if err != nil {
 		return nil, err
@@ -95,10 +96,12 @@ func getEsConcept(concept AggregateConceptModel, conceptType, publishRef, public
 		publicAPIHost,
 		concept.Aliases,
 		concept.GetAuthorities(),
-		concept.IsDeprecated)
+		concept.IsDeprecated,
+		concept.NAICS,
+	)
 }
 
-func newESConceptModel(uuid, conceptType, directType, prefLabel, publishRef, scopeNote, publicAPIHost string, aliases, authorities []string, isDeprecated bool) (*EsConceptModel, error) {
+func newESConceptModel(uuid, conceptType, directType, prefLabel, publishRef, scopeNote, publicAPIHost string, aliases, authorities []string, isDeprecated bool, naics []NAICS) (*EsConceptModel, error) {
 	apiURL, err := ontology.APIURL(uuid, []string{directType}, publicAPIHost)
 	if err != nil {
 		return nil, err
@@ -138,6 +141,10 @@ func newESConceptModel(uuid, conceptType, directType, prefLabel, publishRef, sco
 	esModel.PublishReference = publishRef
 	esModel.IsDeprecated = isDeprecated
 	esModel.ScopeNote = scopeNote
+
+	if conceptType == organisation {
+		esModel.NAICS = naics
+	}
 
 	return esModel, nil
 }

@@ -278,6 +278,53 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 				ScopeNote:    "The Apple company used as a PublicCompany concept",
 			},
 		},
+		{
+			testName: "AggregateConceptModel with NAICS",
+			conceptModel: AggregateConceptModel{
+				PrefUUID:   "2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				DirectType: "PublicCompany",
+				PrefLabel:  "Apple, Inc.",
+				NAICS: []NAICS{
+					{UUID: "1111-1111-1111-1111", Rank: 1},
+					{UUID: "1111-1111-1111-1112", Rank: 2},
+					{UUID: "1111-1111-1111-1113", Rank: 3},
+				},
+				SourceRepresentations: []SourceConcept{
+					{
+						UUID:      "xyz",
+						Authority: "TME",
+					},
+					{
+						UUID:      "abc",
+						Authority: "Factset",
+					},
+				},
+				CountryCode:            "US",
+				CountryOfIncorporation: "US",
+			},
+			esConceptModel: EsConceptModel{
+				Id:        "http://api.ft.com/things/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				Type:      "organisations",
+				ApiUrl:    "http://api.ft.com/organisations/2384fa7a-d514-3d6a-a0ea-3a711f66d0d8",
+				PrefLabel: "Apple, Inc.",
+				Types: []string{
+					"http://www.ft.com/ontology/core/Thing",
+					"http://www.ft.com/ontology/concept/Concept",
+					"http://www.ft.com/ontology/organisation/Organisation",
+					"http://www.ft.com/ontology/company/Company",
+					"http://www.ft.com/ontology/company/PublicCompany",
+				},
+				Authorities: []string{"TME", "Factset"},
+				DirectType:  "http://www.ft.com/ontology/company/PublicCompany",
+				NAICS: []NAICS{
+					{UUID: "1111-1111-1111-1111", Rank: 1},
+					{UUID: "1111-1111-1111-1112", Rank: 2},
+					{UUID: "1111-1111-1111-1113", Rank: 3},
+				},
+				CountryCode:            "US",
+				CountryOfIncorporation: "US",
+			},
+		},
 	}
 
 	for _, testModel := range tests {
@@ -300,6 +347,7 @@ func TestConvertAggregateConceptToESConceptModel(t *testing.T) {
 			assert.Equal(t, testModel.esConceptModel.ScopeNote, esModel.ScopeNote, fmt.Sprintf("Expected ScopeNote %s differ from actual ScopeNote %s", testModel.esConceptModel.ScopeNote, esModel.ScopeNote))
 			assert.Equal(t, testModel.esConceptModel.CountryCode, esModel.CountryCode, fmt.Sprintf("Expected CountryCode %s differ from actual CountryCode %s", testModel.esConceptModel.CountryCode, esModel.CountryCode))
 			assert.Equal(t, testModel.esConceptModel.CountryOfIncorporation, esModel.CountryOfIncorporation, fmt.Sprintf("Expected CountryOfIncorporation %s differ from actual CountryOfIncorporation %s", testModel.esConceptModel.CountryOfIncorporation, esModel.CountryOfIncorporation))
+			assert.Equal(t, testModel.esConceptModel.NAICS, esModel.NAICS, fmt.Sprintf("Expected NAICS %v differ from actual NAICS %v ", testModel.esConceptModel.NAICS, esModel.NAICS))
 
 			actualLastModified, err := time.Parse(time.RFC3339, esModel.LastModified)
 			assert.NoError(t, err)
