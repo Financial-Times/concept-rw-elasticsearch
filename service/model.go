@@ -39,8 +39,8 @@ type AggregateConceptModel struct {
 	ScopeNote string   `json:"scopeNote,omitempty"`
 	// Membership
 	MembershipRoles  []AggregateMembershipRole `json:"membershipRoles,omitempty"`
-	OrganisationUUID string                    `json:"organisationUUID,omitempty"`
-	PersonUUID       string                    `json:"personUUID,omitempty"`
+	OrganisationUUID []string                  `json:"organisationUUID,omitempty"`
+	PersonUUID       []string                  `json:"personUUID,omitempty"`
 	// Organisation
 	CountryCode            string `json:"countryCode,omitempty"`
 	CountryOfIncorporation string `json:"countryOfIncorporation,omitempty"`

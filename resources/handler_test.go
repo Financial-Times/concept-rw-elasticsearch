@@ -2,15 +2,13 @@ package resources
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 
-	"context"
-
-	"github.com/Financial-Times/concept-rw-elasticsearch/service"
 	"github.com/Financial-Times/go-logger"
 	tid "github.com/Financial-Times/transactionid-utils-go"
 	"github.com/gorilla/mux"
@@ -20,6 +18,8 @@ import (
 	testLog "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Financial-Times/concept-rw-elasticsearch/service"
 )
 
 var (
@@ -72,6 +72,20 @@ func TestLoadData(t *testing.T) {
 			status:  http.StatusOK,
 			msg:     `{"message":"Concept written successfully"}`,
 			path:    "/valid-type/8ff7dfef-0330-3de0-b37a-2d6aa9c98580",
+		},
+		{
+			name:    "Successful aggregate membership write",
+			payload: `{"prefUUID":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","prefLabel":"Membership PrefLabel","type":"Membership","membershipRoles":[{"membershipRoleUUID":"9c21f096-0af5-4c16-a513-a64a1abe42fa"}],"organisationUUID":["cf73d36c-330b-48ae-a2aa-8cb3602855cc"],"personUUID":["efcd7388-49d7-4fa1-b8f3-baf59fbf28eb"],"sourceRepresentations":[{"uuid":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","prefLabel":"Membership PrefLabel","type":"Membership","authority":"Smartlogic","authorityValue":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","membershipRoles":[{"membershipRoleUUID":"9c21f096-0af5-4c16-a513-a64a1abe42fa"}],"organisationUUID":"cf73d36c-330b-48ae-a2aa-8cb3602855cc","personUUID":"efcd7388-49d7-4fa1-b8f3-baf59fbf28eb"}]}`,
+			status:  http.StatusOK,
+			msg:     `{"message":"Concept written successfully"}`,
+			path:    "/memberships/8ff7dfef-0330-3de0-b37a-2d6aa9c98580",
+		},
+		{
+			name:    "Fail - Aggregate membership is to ambiguous to write",
+			payload: `{"prefUUID":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","prefLabel":"Membership PrefLabel","type":"Membership","membershipRoles":[{"membershipRoleUUID":"9c21f096-0af5-4c16-a513-a64a1abe42fa"}],"organisationUUID":["cf73d36c-330b-48ae-a2aa-8cb3602855cc","0c6f72df-ce99-4bd2-8336-e89d7ce2d1e6"],"personUUID":[],"sourceRepresentations":[{"uuid":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","prefLabel":"Membership PrefLabel","type":"Membership","authority":"Smartlogic","authorityValue":"8ff7dfef-0330-3de0-b37a-2d6aa9c98580","membershipRoles":[{"membershipRoleUUID":"9c21f096-0af5-4c16-a513-a64a1abe42fa"}],"organisationUUID":"cf73d36c-330b-48ae-a2aa-8cb3602855cc","personUUID":"efcd7388-49d7-4fa1-b8f3-baf59fbf28eb"}]}`,
+			status:  http.StatusBadRequest,
+			msg:     `{"message":"ambiguous membership concept '8ff7dfef-0330-3de0-b37a-2d6aa9c98580', it has more than one HAS_MEMBER or HAS_ORGANISATION relationships"}`,
+			path:    "/memberships/8ff7dfef-0330-3de0-b37a-2d6aa9c98580",
 		},
 		{
 			name:    "Model dropped",
@@ -196,7 +210,7 @@ func TestLoadData(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			dummyEsService := &dummyEsService{noop: tc.noop}
-			writerService, err := NewHandler(dummyEsService, []string{"valid-type"}, publicAPIHost)
+			writerService, err := NewHandler(dummyEsService, []string{"valid-type", "memberships"}, publicAPIHost)
 			assert.NoError(t, err)
 
 			servicesRouter := mux.NewRouter()

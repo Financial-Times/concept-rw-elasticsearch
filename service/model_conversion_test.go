@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-
 	"time"
 
 	tid "github.com/Financial-Times/transactionid-utils-go"
@@ -474,8 +473,8 @@ func TestConvertMembershipToAggregateConceptModel(t *testing.T) {
 			testName: "basic membership",
 			aggregateConceptModel: AggregateConceptModel{
 				PrefUUID:         "b159a539-527e-42ba-b5ee-29c33c0e016a",
-				PersonUUID:       "d52d8fdf-656c-4db3-b27c-06b16cdbb580",
-				OrganisationUUID: "fa2b743d-f535-4deb-8524-df65bd536d09",
+				PersonUUID:       []string{"d52d8fdf-656c-4db3-b27c-06b16cdbb580"},
+				OrganisationUUID: []string{"fa2b743d-f535-4deb-8524-df65bd536d09"},
 				MembershipRoles: []AggregateMembershipRole{
 					{RoleUUID: "c55f1d31-00fc-47a5-8a2e-19a967e07955", InceptionDate: "InceptionDate", TerminationDate: "TerminationDate"},
 					{RoleUUID: "5c1f6da5-596e-4853-89b9-7f08652d366a", InceptionDate: "InceptionDate"},
@@ -492,8 +491,8 @@ func TestConvertMembershipToAggregateConceptModel(t *testing.T) {
 			testName: "empty membership",
 			aggregateConceptModel: AggregateConceptModel{
 				PrefUUID:         "b159a539-527e-42ba-b5ee-29c33c0e016a",
-				PersonUUID:       "d52d8fdf-656c-4db3-b27c-06b16cdbb580",
-				OrganisationUUID: "fa2b743d-f535-4deb-8524-df65bd536d09",
+				PersonUUID:       []string{"d52d8fdf-656c-4db3-b27c-06b16cdbb580"},
+				OrganisationUUID: []string{"fa2b743d-f535-4deb-8524-df65bd536d09"},
 			},
 			esMembershipModel: EsMembershipModel{
 				Id:             "b159a539-527e-42ba-b5ee-29c33c0e016a",
