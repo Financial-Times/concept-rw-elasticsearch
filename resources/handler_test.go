@@ -310,6 +310,45 @@ func TestReadData(t *testing.T) {
 	assert.True(t, reflect.DeepEqual(respObject, esModel))
 }
 
+func TestReadDataInvalidConceptType(t *testing.T) {
+	req, err := http.NewRequest("GET", "/InvalidConceptType/8ff7dfef-0330-3de0-b37a-2d6aa9c98580", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	esModel := &service.EsConceptModel{
+		Id:         "http://api.ft.com/things/8ff7dfef-0330-3de0-b37a-2d6aa9c98580",
+		ApiUrl:     "http://api.ft.com/things/8ff7dfef-0330-3de0-b37a-2d6aa9c98580",
+		PrefLabel:  "Market Report",
+		Types:      []string{"http://www.ft.com/ontology/core/Thing", "http://www.ft.com/ontology/concept/Concept", "http://www.ft.com/ontology/classification/Classification", "http://www.ft.com/ontology/Genre"},
+		DirectType: "http://www.ft.com/ontology/Genre",
+	}
+	rawModel, err := json.Marshal(esModel)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rawmsg := json.RawMessage(rawModel)
+	dummyEsService := &dummyEsService{found: true, source: rawmsg}
+	writerService, err := NewHandler(dummyEsService, []string{"genres"}, publicAPIHost)
+	assert.NoError(t, err)
+
+	servicesRouter := mux.NewRouter()
+	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.ReadData).Methods("GET")
+	servicesRouter.ServeHTTP(rr, req)
+
+	var respObject responseMessage
+	err = json.Unmarshal(rr.Body.Bytes(), &respObject)
+	if err != nil {
+		t.Errorf("Unmarshalling request response failed. %v", err)
+	}
+	expectedResponse := responseMessage{Msg: "Unsupported or invalid concept type"}
+
+	assert.Equal(t, respObject, expectedResponse)
+	assert.Equal(t, rr.Code, http.StatusBadRequest)
+}
+
 func TestReadDataNotFound(t *testing.T) {
 	req, err := http.NewRequest("GET", "/organisations/8ff7dfef-0330-3de0-b37a-2d6aa9c98580", nil)
 	if err != nil {
@@ -402,6 +441,33 @@ func TestDeleteData(t *testing.T) {
 	}
 
 	assert.Nil(t, rr.Body.Bytes(), "Response body should be empty")
+}
+
+func TestDeleteDataInvalidConceptType(t *testing.T) {
+	req, err := http.NewRequest("DELETE", "/InvalidConceptType/8ff7dfef-0330-3de0-b37a-2d6aa9c98580", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	dummyEsService := &dummyEsService{found: true}
+	writerService, err := NewHandler(dummyEsService, []string{"organisations"}, publicAPIHost)
+	assert.NoError(t, err)
+
+	servicesRouter := mux.NewRouter()
+	servicesRouter.HandleFunc("/{concept-type}/{id}", writerService.DeleteData).Methods("DELETE")
+	servicesRouter.ServeHTTP(rr, req)
+
+	var respObject responseMessage
+	err = json.Unmarshal(rr.Body.Bytes(), &respObject)
+	if err != nil {
+		t.Errorf("Unmarshalling request response failed. %v", err)
+	}
+	expectedResponse := responseMessage{Msg: "Unsupported or invalid concept type"}
+
+	assert.Equal(t, respObject, expectedResponse)
+	assert.Equal(t, rr.Code, http.StatusBadRequest)
 }
 
 func TestDeleteDataNotFound(t *testing.T) {

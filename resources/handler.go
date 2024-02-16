@@ -227,7 +227,15 @@ func processAggregateConceptModel(ctx context.Context, uuid, conceptType, public
 }
 
 func (h *Handler) ReadData(writer http.ResponseWriter, request *http.Request) {
-	uuid := mux.Vars(request)["id"]
+	vars := mux.Vars(request)
+	uuid := vars["id"]
+	conceptType := vars["concept-type"]
+
+	if !h.allowedConceptTypes[conceptType] {
+		writeMessage(writer, errUnsupportedConceptType.Error(), http.StatusBadRequest)
+		return
+	}
+
 	getResult, err := h.elasticService.ReadData(uuid)
 
 	if err != nil {
@@ -275,6 +283,11 @@ func (h *Handler) DeleteData(writer http.ResponseWriter, request *http.Request) 
 	uuid := mux.Vars(request)["id"]
 	conceptType := mux.Vars(request)["concept-type"]
 
+	if !h.allowedConceptTypes[conceptType] {
+		writeMessage(writer, errUnsupportedConceptType.Error(), http.StatusBadRequest)
+		return
+	}
+
 	res, err := h.elasticService.DeleteData(ctx, conceptType, uuid)
 
 	if err != nil {
@@ -317,11 +330,13 @@ func (h *Handler) Close() {
 	h.elasticService.CloseBulkProcessor()
 }
 
+type responseMessage struct {
+	Msg string `json:"message"`
+}
+
 func writeMessage(w http.ResponseWriter, msg string, status int) {
 	w.Header().Add("Content-Type", "application/json")
-	data, _ := json.Marshal(&struct {
-		Msg string `json:"message"`
-	}{msg})
+	data, _ := json.Marshal(responseMessage{Msg: msg})
 
 	w.WriteHeader(status)
 	w.Write(data)
