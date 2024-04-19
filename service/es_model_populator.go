@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	ontology "github.com/Financial-Times/cm-graph-ontology"
+	ontology "github.com/Financial-Times/cm-graph-ontology/v2"
 	log "github.com/Financial-Times/go-logger"
 )
 
