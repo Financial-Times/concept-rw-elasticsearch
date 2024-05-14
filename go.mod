@@ -3,7 +3,7 @@ module github.com/Financial-Times/concept-rw-elasticsearch
 go 1.22
 
 require (
-	github.com/Financial-Times/cm-graph-ontology v1.2.1
+	github.com/Financial-Times/cm-graph-ontology/v2 v2.0.8
 	github.com/Financial-Times/go-fthealth v0.0.0-20171204124831-1b007e2b37b7
 	github.com/Financial-Times/go-logger v0.0.0-20180323124113-febee6537e90
 	github.com/Financial-Times/http-handlers-go v0.0.0-20180517120644-2c20324ab887
@@ -30,6 +30,7 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.0 // indirect
 	github.com/stretchr/objx v0.1.1 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/net v0.10.0 // indirect

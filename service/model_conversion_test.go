@@ -24,6 +24,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 	tests := []struct {
 		conceptModel   ConceptModel
 		esConceptModel EsConceptModel
+		conceptType    string
 	}{
 		{
 			conceptModel: ConceptModel{
@@ -74,6 +75,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 					"Apple, Inc.",
 				},
 			},
+			conceptType: "organisations",
 		},
 		{
 			conceptModel: ConceptModel{
@@ -99,6 +101,7 @@ func TestConvertToESConceptModel(t *testing.T) {
 				Aliases:      []string{},
 				IsDeprecated: true,
 			},
+			conceptType: "organisations",
 		},
 		{
 			conceptModel: ConceptModel{
@@ -126,13 +129,59 @@ func TestConvertToESConceptModel(t *testing.T) {
 				IsDeprecated: true,
 				ScopeNote:    "The Apple company used as a PublicCompany concept",
 			},
+			conceptType: "organisations",
+		},
+		{
+			conceptModel: ConceptModel{
+				UUID:       "02b8f22b-5b76-5600-89a2-df2676c0a923",
+				DirectType: "SVProvision",
+				PrefLabel:  "WaterSense",
+				Aliases:    []string{"WaterSense"},
+			},
+			esConceptModel: EsConceptModel{
+				Id:        "http://api.ft.com/things/02b8f22b-5b76-5600-89a2-df2676c0a923",
+				Type:      "sv-provisions",
+				ApiUrl:    "http://api.ft.com/concepts/02b8f22b-5b76-5600-89a2-df2676c0a923",
+				PrefLabel: "WaterSense",
+				Types: []string{
+					"http://www.ft.com/ontology/core/Thing",
+					"http://www.ft.com/ontology/concept/Concept",
+					"http://www.ft.com/ontology/Provision",
+					"http://www.ft.com/ontology/provision/SVProvision",
+				},
+				DirectType: "http://www.ft.com/ontology/provision/SVProvision",
+				Aliases:    []string{"WaterSense"},
+			},
+			conceptType: "sv-provisions",
+		},
+		{
+			conceptModel: ConceptModel{
+				UUID:       "e0fc58d1-8dc5-47c6-90b1-59ccf8217366",
+				DirectType: "SVCategory",
+				PrefLabel:  "Policy and Regulation",
+				Aliases:    []string{"Policy and Regulation"},
+			},
+			esConceptModel: EsConceptModel{
+				Id:        "http://api.ft.com/things/e0fc58d1-8dc5-47c6-90b1-59ccf8217366",
+				Type:      "sv-categories",
+				ApiUrl:    "http://api.ft.com/things/e0fc58d1-8dc5-47c6-90b1-59ccf8217366",
+				PrefLabel: "Policy and Regulation",
+				Types: []string{
+					"http://www.ft.com/ontology/core/Thing",
+					"http://www.ft.com/ontology/concept/Concept",
+					"http://www.ft.com/ontology/SVCategory",
+				},
+				DirectType: "http://www.ft.com/ontology/SVCategory",
+				Aliases:    []string{"Policy and Regulation"},
+			},
+			conceptType: "sv-categories",
 		},
 	}
 
 	for _, testModel := range tests {
 		testTID := tid.NewTransactionID()
 
-		actual, _ := ConvertConceptToESConceptModel(testModel.conceptModel, "organisations", testTID, publicAPIHost)
+		actual, _ := ConvertConceptToESConceptModel(testModel.conceptModel, testModel.conceptType, testTID, publicAPIHost)
 		esModel := actual.(*EsConceptModel)
 		assert.Equal(t, testModel.esConceptModel.Id, esModel.Id, fmt.Sprintf("Expected Id %s differs from actual id %s ", testModel.esConceptModel.Id, esModel.Id))
 		assert.Equal(t, testModel.esConceptModel.Type, esModel.Type, fmt.Sprintf("Expected Type %s differs from actual Type %s ", testModel.esConceptModel.Type, esModel.Type))
