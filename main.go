@@ -48,7 +48,7 @@ func main() {
 	})
 	indexName := app.String(cli.StringOpt{
 		Name:   "index-name",
-		Value:  "concepts",
+		Value:  "all-concepts",
 		Desc:   "The name of the elasticsearch index",
 		EnvVar: "ELASTICSEARCH_INDEX",
 	})
