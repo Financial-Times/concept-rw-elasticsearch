@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -118,10 +117,8 @@ func (es *esService) IsIndexReadOnly() (bool, string, error) {
 	}
 
 	for k, v := range resp {
-		if strings.HasPrefix(k, es.indexName) {
-			readOnly, err := es.isIndexReadOnly(v.Settings)
-			return readOnly, k, err
-		}
+		readOnly, err := es.isIndexReadOnly(v.Settings)
+		return readOnly, k, err
 	}
 
 	return false, "", errors.New("no index settings found")
