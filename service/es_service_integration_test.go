@@ -811,7 +811,7 @@ func TestGetAllIds(t *testing.T) {
 	_, err := ec.Refresh(indexName).Do(context.Background())
 	require.NoError(t, err, "expected successful flush")
 
-	ch := service.GetAllIds(context.Background(), false)
+	ch := service.GetAllIds(context.Background(), false, false)
 	actual := make(map[string]struct{})
 	for id := range ch {
 		actual[id.ID] = struct{}{}
