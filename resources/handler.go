@@ -309,10 +309,11 @@ func (h *Handler) GetAllIds(writer http.ResponseWriter, request *http.Request) {
 	ctx := tid.TransactionAwareContext(context.Background(), transactionID)
 
 	includeTypes := strings.ToLower(request.URL.Query().Get("includeTypes")) == "true"
+	excludeFtPinkAuthorities := strings.ToLower(request.URL.Query().Get("excludeFtPinkAuthorities")) == "true"
 
 	writer.Header().Set("Content-Type", "text/plain")
 	writer.WriteHeader(http.StatusOK)
-	ids := h.elasticService.GetAllIds(ctx, includeTypes)
+	ids := h.elasticService.GetAllIds(ctx, includeTypes, excludeFtPinkAuthorities)
 	i := 0
 	for id := range ids {
 		if includeTypes {

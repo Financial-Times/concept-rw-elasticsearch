@@ -36,6 +36,7 @@ const (
 	columnistUUID      = "7ef75a6a-b6bf-4eb7-a1da-03e0acabef1b"
 	journalistUUID     = "33ee38a4-c677-4952-a141-2ae14da3aedd"
 	notFoundResult     = "not_found"
+	allConceptsAlias   = "all-concepts"
 )
 
 type esService struct {
@@ -57,7 +58,7 @@ type EsService interface {
 	CloseBulkProcessor() error
 	GetClusterHealth() (*elastic.ClusterHealthResponse, error)
 	IsIndexReadOnly() (bool, string, error)
-	GetAllIds(ctx context.Context, includeTypes bool) chan EsIDTypePair
+	GetAllIds(ctx context.Context, includeTypes bool, excludeFTPinkAuthorities bool) chan EsIDTypePair
 }
 
 func NewEsService(ch chan *elastic.Client, indexName string, bulkProcessorConfig *BulkProcessorConfig) EsService {
@@ -412,18 +413,28 @@ func (es *esService) CloseBulkProcessor() error {
 	return es.bulkProcessor.Close()
 }
 
-func (es *esService) GetAllIds(ctx context.Context, includeTypes bool) chan EsIDTypePair {
+func (es *esService) GetAllIds(ctx context.Context, includeTypes bool, excludeFTPinkAuthorities bool) chan EsIDTypePair {
 	ids := make(chan EsIDTypePair)
 
 	go func() {
 		defer close(ids)
-
-		r := elastic.NewScrollService(es.elasticClient).
-			Index(es.indexName).
-			Query(elastic.NewMatchAllQuery()).
-			Sort("_doc", true).
-			Size(1000).
-			FetchSource(includeTypes)
+		var r *elastic.ScrollService
+		if excludeFTPinkAuthorities {
+			r = elastic.NewScrollService(es.elasticClient).
+				Index(allConceptsAlias).
+				Query(elastic.NewBoolQuery().
+					MustNot(elastic.NewTermsQuery("authorities", "TME", "Smartlogic"))).
+				Sort("_doc", true).
+				Size(1000).
+				FetchSource(includeTypes)
+		} else {
+			r = elastic.NewScrollService(es.elasticClient).
+				Index(es.indexName).
+				Query(elastic.NewMatchAllQuery()).
+				Sort("_doc", true).
+				Size(1000).
+				FetchSource(includeTypes)
+		}
 
 		es.RLock()
 		defer es.RUnlock()

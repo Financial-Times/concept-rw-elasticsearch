@@ -658,6 +658,6 @@ func (service *dummyEsService) GetClusterHealth() (*elastic.ClusterHealthRespons
 	return nil, nil
 }
 
-func (service *dummyEsService) GetAllIds(ctx context.Context, includeTypes bool) chan service.EsIDTypePair {
+func (service *dummyEsService) GetAllIds(ctx context.Context, includeTypes bool, excludeFTPinkAuthorities bool) chan service.EsIDTypePair {
 	return service.ids
 }
