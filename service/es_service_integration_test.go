@@ -775,7 +775,7 @@ func TestMetricsUpdated(t *testing.T) {
 	assert.Equal(t, testMetrics.Metrics.PrevWeekAnnotationsCount, actualModel.Metrics.PrevWeekAnnotationsCount, "PrevWeekAnnotationsCount should be set")
 }
 
-func TestGetAllIds(t *testing.T) {
+func TestGetAllIDs(t *testing.T) {
 	esURL := getElasticSearchTestURL()
 	ec := getElasticClient(t, esURL)
 	bulkProcessorConfig := NewBulkProcessorConfig(1, 1, 1, time.Second)
@@ -811,7 +811,7 @@ func TestGetAllIds(t *testing.T) {
 	_, err := ec.Refresh(indexName).Do(context.Background())
 	require.NoError(t, err, "expected successful flush")
 
-	ch := service.GetAllIds(context.Background(), false)
+	ch := service.GetAllIDs(context.Background(), false, false)
 	actual := make(map[string]struct{})
 	for id := range ch {
 		actual[id.ID] = struct{}{}
