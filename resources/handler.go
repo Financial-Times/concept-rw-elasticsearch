@@ -134,10 +134,10 @@ func (h *Handler) LoadMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if metrics.Metrics == nil {
-		writeMessage(w, "Please supply metrics as a JSON object with a single property 'metrics'", http.StatusBadRequest)
-		return
-	}
+	// if metrics.Metrics == nil {
+	// 	writeMessage(w, "Please supply metrics as a JSON object with a single property 'metrics'", http.StatusBadRequest)
+	// 	return
+	// }
 
 	h.elasticService.PatchUpdateConcept(uuid, &metrics)
 	writeMessage(w, "Concept updated with metrics successfully", http.StatusOK)
