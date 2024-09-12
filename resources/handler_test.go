@@ -550,7 +550,7 @@ func TestIDsEndpointReturnsIDsWithInvalidIncludeTypesValue(t *testing.T) {
 		close(ids)
 	}()
 
-	h.GetAllIds(w, req)
+	h.GetAllIDs(w, req)
 
 	for {
 		line, err := w.Body.ReadString('\n')
@@ -583,7 +583,7 @@ func TestIDsEndpointReturnsTypes(t *testing.T) {
 		close(ids)
 	}()
 
-	h.GetAllIds(w, req)
+	h.GetAllIDs(w, req)
 
 	for {
 		line, err := w.Body.ReadString('\n')
@@ -658,6 +658,6 @@ func (service *dummyEsService) GetClusterHealth() (*elastic.ClusterHealthRespons
 	return nil, nil
 }
 
-func (service *dummyEsService) GetAllIds(ctx context.Context, includeTypes bool) chan service.EsIDTypePair {
+func (service *dummyEsService) GetAllIDs(_ context.Context, _ bool, _ bool) chan service.EsIDTypePair {
 	return service.ids
 }
