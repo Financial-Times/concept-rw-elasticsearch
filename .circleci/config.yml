@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  ft-golang-ci: financial-times/golang-ci@1
+  ft-golang-ci: financial-times/golang-ci@2
 
 jobs:
   build-and-test-project:
@@ -36,10 +36,3 @@ workflows:
           context: cm-team-github
           requires:
             - build-and-test-project
-  snyk-scanning:
-    jobs:
-      - ft-golang-ci/scan:
-          name: scan-dependencies
-          context:
-            - cm-team-snyk
-            - cm-team-github
