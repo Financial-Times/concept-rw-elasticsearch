@@ -41,7 +41,7 @@ spec:
         - name: ELASTICSEARCH_INDEX
           value: concepts
         - name: ELASTICSEARCH_WHITELISTED_CONCEPTS
-          value: "genres,topics,sections,subjects,locations,brands,organisations,people,alphaville-series,memberships,sv-categories,sv-provisions,fta-brands,fta-genres,fta-topics"
+          value: "genres,topics,sections,subjects,locations,brands,organisations,people,alphaville-series,memberships,fta-brands,fta-genres,fta-topics"
         - name: ELASTICSEARCH_ENDPOINT
           valueFrom:
             configMapKeyRef:
