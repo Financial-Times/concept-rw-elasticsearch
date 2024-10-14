@@ -310,10 +310,11 @@ func (h *Handler) GetAllIDs(writer http.ResponseWriter, request *http.Request) {
 
 	includeTypes := strings.ToLower(request.URL.Query().Get("includeTypes")) == "true"
 	excludeFTPinkAuthorities := strings.ToLower(request.URL.Query().Get("excludeFTPinkAuthorities")) == "true"
+	includeAllAuthorities := strings.ToLower(request.URL.Query().Get("includeAllAuthorities")) == "true"
 
 	writer.Header().Set("Content-Type", "text/plain")
 	writer.WriteHeader(http.StatusOK)
-	ids := h.elasticService.GetAllIDs(ctx, includeTypes, excludeFTPinkAuthorities)
+	ids := h.elasticService.GetAllIDs(ctx, includeTypes, excludeFTPinkAuthorities, includeAllAuthorities)
 	i := 0
 	for id := range ids {
 		if includeTypes {
